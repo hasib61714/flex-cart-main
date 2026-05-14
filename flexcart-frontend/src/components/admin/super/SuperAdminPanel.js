@@ -5,7 +5,7 @@ import api from '../../../services/api';
 import {
   LayoutDashboard, Shield, Users, DollarSign, TrendingUp, Megaphone,
   ClipboardList, LogOut, Menu, X, Plus, Pencil, Trash2, PauseCircle,
-  PlayCircle, Search, RefreshCcw, ChevronDown, Save, Printer,
+  PlayCircle, Search, RefreshCcw, Save, Printer,
   Lock, Package, Truck, GitBranch, AlertCircle, CheckCircle, XCircle,
   CreditCard, BarChart2, Settings, Sun, Moon, User, Users2, Building2, Eye, EyeOff
 } from 'lucide-react';

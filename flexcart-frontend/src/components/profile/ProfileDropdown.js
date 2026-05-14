@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiUser, FiRefreshCw, FiLogOut,
-  FiSun, FiImage, FiSettings, FiChevronRight, FiPlusCircle, FiClock, FiCheckCircle, FiAlertCircle
+  FiSun, FiImage, FiSettings, FiChevronRight, FiPlusCircle, FiClock, FiCheckCircle
 } from 'react-icons/fi';
 import { AuthContext } from '../../context/AuthContext';
 import { CompanyContext } from '../../context/CompanyContext';
@@ -17,8 +17,6 @@ const ProfileDropdown = ({ onClose, onOpenModal, onRequireLogin, onRequireRegist
   // Determine company status for the current user
   const pendingCompany = myCompanies.find(c => c.verification_status === 'pending');
   const approvedCompany = myCompanies.find(c => c.verification_status === 'approved');
-  const hasAnyActiveApplication = !!(pendingCompany || approvedCompany);
-
   const handleLogout = async () => {
     await logout();
     toast.success('Logged out successfully');

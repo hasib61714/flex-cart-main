@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle, RefreshCw, Route, MapPin,
-  Building2, ArrowRight, Package, Truck, Clock, Plus,
+  Building2, ArrowRight, Truck, Clock, Plus,
   GitBranch, Activity, Navigation
 } from 'lucide-react';
 import deliveryService from '../../../services/deliveryService';

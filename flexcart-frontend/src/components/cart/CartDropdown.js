@@ -8,7 +8,7 @@ import { formatPrice, getImageUrl } from '../../utils/helpers';
 import './CartDropdown.css';
 
 const CartDropdown = ({ onClose }) => {
-  const { cartItems, cartTotal, cartCount, updateQuantity, removeItem } = useContext(CartContext);
+  const { cartItems, cartCount, updateQuantity, removeItem } = useContext(CartContext);
   const { isAuthenticated } = useContext(AuthContext);
   const [showPayment, setShowPayment] = useState(false);
 

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Smartphone, CreditCard, Building2, Landmark, Banknote,
+  Smartphone, CreditCard, Landmark, Banknote,
   X, ShoppingBag, MapPin, Plus, Minus, CheckCircle, Truck, Package
 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';

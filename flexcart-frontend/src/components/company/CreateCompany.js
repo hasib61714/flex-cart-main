@@ -1,7 +1,7 @@
 import React, { useState, useContext, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Building2, Upload, User, Mail, Phone, MapPin, Globe, CheckCircle,
+  Building2, Upload, Mail, Phone, MapPin, Globe, CheckCircle,
   AlertCircle, Camera, CreditCard, ArrowRight, ArrowLeft, Briefcase,
   X, RefreshCcw, ShieldCheck, FileImage, Eye, ChevronDown
 } from 'lucide-react';

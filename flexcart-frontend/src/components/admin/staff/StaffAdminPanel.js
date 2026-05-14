@@ -8,8 +8,8 @@ import {
   Plus, Pencil, Trash2, CheckCircle, XCircle, PauseCircle, PlayCircle,
   Search, RefreshCcw, ChevronDown, Building2, CreditCard,
   AlertCircle, ShieldCheck, Shield, Eye, EyeOff, Lock, ChevronRight, TrendingUp,
-  Clock, User, Activity, MapPin, ArrowRight, Bike, Car, Zap,
-  DollarSign, Box, Info, Bell, Phone, Ban, Navigation, Sun, Moon
+  Clock, User, Activity, MapPin, ArrowRight,
+  DollarSign, Phone, Ban, Navigation, Sun, Moon
 } from 'lucide-react';
 import './StaffAdminPanel.css';
 

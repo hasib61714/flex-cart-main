@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Truck, Search, RefreshCw, AlertCircle, MapPin, Package,
+  Truck, RefreshCw, AlertCircle, MapPin, Package,
   DollarSign, User, Clock, History, CheckCircle, LogOut,
-  X, Bell, Inbox, GitBranch, Route, RotateCcw, Send,
+  X, Bell, GitBranch, Route, Send,
   Phone, ChevronDown, Sun, Moon, Calendar, TrendingUp,
   XCircle, Activity, Lock, Eye, EyeOff
 } from 'lucide-react';
@@ -44,10 +44,6 @@ function buildDateParams(dateFilter, customFrom, customTo) {
 function fmtDate(str) {
   if (!str) return '-';
   return new Date(str).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-function fmtDateFull(str) {
-  if (!str) return '-';
-  return new Date(str).toLocaleString();
 }
 function joinAddr(...parts) {
   return parts.filter(Boolean).join(', ') || '-';
