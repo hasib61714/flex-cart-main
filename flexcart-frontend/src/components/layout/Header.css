@@ -8,8 +8,8 @@
   left: 0;
   right: 0;
   background: var(--bg-header);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
   z-index: var(--z-header);
   transition: height var(--transition-normal);
@@ -46,6 +46,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-user-select: none;
   user-select: none;
 }
 
