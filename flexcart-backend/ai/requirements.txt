@@ -1,0 +1,23 @@
+# FlexCart Visual Search Service — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# IMPORTANT (Railway): keep the container image under the 4GB limit.
+# Use the CPU-only PyTorch wheels so pip does NOT pull massive CUDA/NVIDIA packages.
+# (Railpack uses `pip install -r requirements.txt`.)
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+# Core service
+flask>=3.0.0
+Pillow>=10.0.0
+numpy>=1.26.0
+requests>=2.31.0
+
+# PyTorch + torchvision (preferred backend — CPU build)
+# Install the CPU-only build to keep the size smaller:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+
+# TensorFlow/Keras (optional fallback — only needed if PyTorch is unavailable)
+# tensorflow>=2.15.0
