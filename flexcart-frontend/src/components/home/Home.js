@@ -87,7 +87,8 @@ const Home = ({ category, sort, filters, onRequireAuth, showRecommendations }) =
       }
     } catch (error) {
       console.error('Load products error:', error);
-      toast.error('Failed to load products');
+      setHasMore(false); // stop infinite scroll on any error
+      if (pageNum === 1) toast.error('Failed to load products');
     } finally {
       setLoading(false);
       setLoadingMore(false);
