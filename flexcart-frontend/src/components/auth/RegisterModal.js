@@ -87,13 +87,13 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Full Name *</label>
+            <label className="form-label">Username *</label>
             <div className="input-with-icon">
               <FiUser className="input-icon" />
               <input
                 type="text"
                 name="username"
-                placeholder="Enter your name"
+                placeholder="e.g. md_syful_islam"
                 value={formData.username}
                 onChange={handleChange}
                 required
