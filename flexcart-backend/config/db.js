@@ -554,13 +554,15 @@ const { Pool } = require('pg');
 
       // ── 5. Seed Super Admin ─────────────────────────────────────────────────
       const bcrypt = require('bcryptjs');
-      const hash = await bcrypt.hash('superadmin@123', 10);
+      const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@flexcart.com';
+      const adminPass  = process.env.SUPER_ADMIN_PASSWORD || 'ChangeMe@' + Math.random().toString(36).slice(2, 10);
+      const hash = await bcrypt.hash(adminPass, 10);
       await pgPool.query(`
-        INSERT INTO users (username, email, password_hash, role, is_verified, status, plain_password)
-        VALUES ('superadmin', 'flexcart@gmail.com', $1, 'super_admin', 1, 'active', 'superadmin@123')
+        INSERT INTO users (username, email, password_hash, role, is_verified, status)
+        VALUES ('superadmin', $2, $1, 'super_admin', 1, 'active')
         ON CONFLICT (email) DO UPDATE SET role = 'super_admin', is_verified = 1
-      `, [hash]).catch(() => {});
-      console.log('✅ Super admin ready (flexcart@gmail.com)');
+      `, [hash, adminEmail]).catch(() => {});
+      console.log(`✅ Super admin ready (${adminEmail})`);
 
       // ── 6. Recalculate company ratings ──────────────────────────────────────
       await pgPool.query(`
