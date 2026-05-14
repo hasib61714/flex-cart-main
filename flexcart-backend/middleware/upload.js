@@ -1,41 +1,21 @@
 const multer = require('multer');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Ensure upload directories exist
-const ensureDir = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const uploadDirs = [
-  './uploads/profiles',
-  './uploads/products',
-  './uploads/companies',
-  './uploads/nids',
-  './uploads/ai',
-  './uploads/deliveries'
-];
-
-uploadDirs.forEach(ensureDir);
-
-// Storage configuration
-const createStorage = (folder) => {
-  return multer.diskStorage({
-    destination: (req, file, cb) => {
-      const dir = `./uploads/${folder}`;
-      ensureDir(dir);
-      cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const filename = `${uuidv4()}${ext}`;
-      cb(null, filename);
-    }
-  });
-};
+const createStorage = (folder) => new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: `flexcart/${folder}`,
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
+    resource_type: 'image',
+  },
+});
 
 // File filter
 const imageFilter = (req, file, cb) => {
@@ -51,37 +31,37 @@ const imageFilter = (req, file, cb) => {
 const uploadProfile = multer({
   storage: createStorage('profiles'),
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const uploadProduct = multer({
   storage: createStorage('products'),
   fileFilter: imageFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 const uploadCompany = multer({
   storage: createStorage('companies'),
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const uploadNID = multer({
   storage: createStorage('nids'),
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const uploadAI = multer({
   storage: createStorage('ai'),
   fileFilter: imageFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 const uploadDeliveryProof = multer({
   storage: createStorage('deliveries'),
   fileFilter: imageFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-module.exports = { uploadProfile, uploadProduct, uploadCompany, uploadNID, uploadAI, uploadDeliveryProof };
+module.exports = { uploadProfile, uploadProduct, uploadCompany, uploadNID, uploadAI, uploadDeliveryProof, cloudinary };

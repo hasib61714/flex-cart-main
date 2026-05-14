@@ -1427,7 +1427,7 @@ const deliveryController = {
         return res.status(400).json({ success: false, message: 'Delivery is already completed' });
       }
 
-      const proofUrl = req.file ? `/uploads/deliveries/${req.file.filename}` : null;
+      const proofUrl = req.file ? req.file.path : null;
 
       await connection.query(
         `UPDATE deliveries

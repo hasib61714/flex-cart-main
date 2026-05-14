@@ -24,7 +24,7 @@ const profileController = {
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) { setClause.push(`${field} = ?`); values.push(req.body[field]); }
       }
-      if (req.file) { setClause.push('profile_image = ?'); values.push(`/uploads/profiles/${req.file.filename}`); }
+      if (req.file) { setClause.push('profile_image = ?'); values.push(req.file.path); }
       if (setClause.length === 0) return res.status(400).json({ success: false, message: 'No fields to update' });
 
       values.push(req.user.id);
@@ -43,7 +43,7 @@ const profileController = {
   uploadProfileImage: async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ success: false, message: 'No image provided' });
-      const imageUrl = `/uploads/profiles/${req.file.filename}`;
+      const imageUrl = req.file.path;
       await pool.query('UPDATE users SET profile_image = ? WHERE id = ?', [imageUrl, req.user.id]);
       res.json({ success: true, message: 'Profile image updated', data: { profile_image: imageUrl } });
     } catch (error) { console.error(error); res.status(500).json({ success: false, message: 'Server error' }); }

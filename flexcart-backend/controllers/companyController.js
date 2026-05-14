@@ -198,16 +198,16 @@ const createCompany = async (req, res) => {
 
         // Get file paths
         const nidFrontImage = req.files?.nid_front_image?.[0]
-            ? `/uploads/nids/${req.files.nid_front_image[0].filename}`
+            ? req.files.nid_front_image[0].path
             : null;
         const nidBackImage = req.files?.nid_back_image?.[0]
-            ? `/uploads/nids/${req.files.nid_back_image[0].filename}`
+            ? req.files.nid_back_image[0].path
             : null;
         const faceImage = req.files?.face_image?.[0]
-            ? `/uploads/faces/${req.files.face_image[0].filename}`
+            ? req.files.face_image[0].path
             : null;
         const companyLogo = req.files?.company_logo?.[0]
-            ? `/uploads/companies/${req.files.company_logo[0].filename}`
+            ? req.files.company_logo[0].path
             : null;
 
         if (!nidFrontImage || !nidBackImage) {
@@ -654,15 +654,15 @@ const updateCompany = async (req, res) => {
         } = req.body;
 
         const companyLogo = req.files?.company_logo?.[0]
-            ? `/uploads/companies/${req.files.company_logo[0].filename}`
+            ? req.files.company_logo[0].path
             : undefined;
 
         const coverImage = req.files?.cover_image?.[0]
-            ? `/uploads/companies/${req.files.cover_image[0].filename}`
+            ? req.files.cover_image[0].path
             : undefined;
 
         const promoBanner = req.files?.promo_banner?.[0]
-            ? `/uploads/companies/${req.files.promo_banner[0].filename}`
+            ? req.files.promo_banner[0].path
             : undefined;
 
         let query = `UPDATE companies SET 
@@ -1399,13 +1399,13 @@ const addProduct = async (req, res) => {
 
         if (imageFiles.length > 0) {
             imageFiles.forEach(file => {
-                images.push(`/uploads/products/${file.filename}`);
+                images.push(file.path);
             });
         }
 
         const arEnabled = parseInt(is_ar_3d) === 1;
         const arQrFile = req.files?.ar_qr_image?.[0] || null;
-        const arQrImagePath = arQrFile ? `/uploads/products/ar/${arQrFile.filename}` : null;
+        const arQrImagePath = arQrFile ? arQrFile.path : null;
 
         if (arEnabled) {
             if (!ar_url || String(ar_url).trim().length === 0) {
@@ -1621,12 +1621,12 @@ const updateProduct = async (req, res) => {
 
         if (newImageFiles.length > 0) {
             newImageFiles.forEach(file => {
-                newImages.push(`/uploads/products/${file.filename}`);
+                newImages.push(file.path);
             });
         }
 
         const newArQrFile = req.files?.ar_qr_image?.[0] || null;
-        const newArQrImagePath = newArQrFile ? `/uploads/products/ar/${newArQrFile.filename}` : null;
+        const newArQrImagePath = newArQrFile ? newArQrFile.path : null;
 
         const arEnabledExplicit = is_ar_3d !== undefined ? parseInt(is_ar_3d) === 1 : null;
         const wantsArEnable = arEnabledExplicit === true;

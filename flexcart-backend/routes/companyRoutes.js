@@ -3,45 +3,34 @@ const router = express.Router();
 const companyController = require('../controllers/companyController');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const multer = require('multer');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
-
-// Ensure upload directories exist
-['./uploads/nids', './uploads/faces', './uploads/companies', './uploads/products', './uploads/products/ar'].forEach(dir => {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { cloudinary } = require('../middleware/upload');
 
 const companyUpload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
+    storage: new CloudinaryStorage({
+        cloudinary,
+        params: (req, file) => {
+            let folder = 'flexcart/companies';
             if (file.fieldname === 'nid_front_image' || file.fieldname === 'nid_back_image') {
-                return cb(null, './uploads/nids');
+                folder = 'flexcart/nids';
+            } else if (file.fieldname === 'face_image') {
+                folder = 'flexcart/faces';
             }
-            if (file.fieldname === 'face_image') {
-                return cb(null, './uploads/faces');
-            }
-            cb(null, './uploads/companies');
+            return { folder, allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'], resource_type: 'image' };
         },
-        filename: (req, file, cb) => {
-            cb(null, `${uuidv4()}${path.extname(file.originalname)}`);
-        }
     }),
-    limits: { fileSize: 10 * 1024 * 1024 }
+    limits: { fileSize: 10 * 1024 * 1024 },
 });
+
 const productUpload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            if (file.fieldname === 'ar_qr_image') {
-                return cb(null, './uploads/products/ar');
-            }
-            return cb(null, './uploads/products');
+    storage: new CloudinaryStorage({
+        cloudinary,
+        params: (req, file) => {
+            const folder = file.fieldname === 'ar_qr_image' ? 'flexcart/products/ar' : 'flexcart/products';
+            return { folder, allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'], resource_type: 'image' };
         },
-        filename: (req, file, cb) => {
-            cb(null, `${uuidv4()}${path.extname(file.originalname)}`);
-        }
     }),
-    limits: { fileSize: 100 * 1024 * 1024 }
+    limits: { fileSize: 100 * 1024 * 1024 },
 });
 // Company CRUD
 router.post('/',
