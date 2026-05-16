@@ -898,14 +898,14 @@ const staffAdminController = {
 
       const [revenueData] = await pool.query(
         `SELECT TO_CHAR(created_at, ?) as label, SUM(total_amount) as revenue, COUNT(*) as orders
-         FROM orders WHERE payment_status='paid' GROUP BY label ORDER BY label DESC LIMIT 12`,
+         FROM orders WHERE payment_status='paid' GROUP BY 1 ORDER BY 1 DESC LIMIT 12`,
         [dateFormat]
       );
       const [deliveryData] = await pool.query(
         `SELECT TO_CHAR(assigned_at, ?) as label, COUNT(*) as total,
                 SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as completed,
                 SUM(total_cost) as delivery_revenue
-         FROM deliveries GROUP BY label ORDER BY label DESC LIMIT 12`,
+         FROM deliveries GROUP BY 1 ORDER BY 1 DESC LIMIT 12`,
         [dateFormat]
       );
 
