@@ -4,13 +4,30 @@ const { isValidQuantity } = require('../utils/validators');
 const cartController = {
   getCart: async (req, res) => {
     try {
-      const [items] = await pool.query(
-        `SELECT c.*, p.name, p.current_price, p.old_price, p.image_url, p.discount_percentage, p.is_in_stock, p.stock_quantity, p.points_reward, p.is_cod_allowed, p.cod_advance_amount, comp.company_name, comp.company_logo,
-        COALESCE(c.negotiated_price, p.current_price) as unit_price,
-        (COALESCE(c.negotiated_price, p.current_price) * c.quantity) as total_price
-        FROM cart c JOIN products p ON c.product_id = p.id JOIN companies comp ON p.company_id = comp.id
-        WHERE c.user_id = ? AND p.status = 'active' ORDER BY c.created_at DESC`, [req.user.id]
-      );
+      let items = [];
+      try {
+        [items] = await pool.query(
+          `SELECT c.*, p.name, p.current_price, p.old_price, p.image_url, p.discount_percentage, p.is_in_stock, p.stock_quantity, p.points_reward, p.is_cod_allowed, p.cod_advance_amount, comp.company_name, comp.company_logo,
+          COALESCE(c.negotiated_price, p.current_price) as unit_price,
+          (COALESCE(c.negotiated_price, p.current_price) * c.quantity) as total_price
+          FROM cart c JOIN products p ON c.product_id = p.id JOIN companies comp ON p.company_id = comp.id
+          WHERE c.user_id = ? AND p.status = 'active' ORDER BY c.created_at DESC`, [req.user.id]
+        );
+      } catch (_colErr) {
+        // Fallback: missing optional columns (negotiated_price, cod, discount, points)
+        [items] = await pool.query(
+          `SELECT c.id, c.user_id, c.product_id, c.quantity, c.created_at,
+                  p.name, p.current_price, p.old_price, p.image_url, p.is_in_stock, p.stock_quantity,
+                  comp.company_name, comp.company_logo,
+                  p.current_price as unit_price,
+                  (p.current_price * c.quantity) as total_price,
+                  NULL as negotiated_price, NULL as discount_percentage,
+                  0 as is_cod_allowed, NULL as cod_advance_amount, 0 as points_reward
+           FROM cart c JOIN products p ON c.product_id = p.id JOIN companies comp ON p.company_id = comp.id
+           WHERE c.user_id = ? AND p.status = 'active' ORDER BY c.created_at DESC`,
+          [req.user.id]
+        );
+      }
 
       const cartTotal = items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
       const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);

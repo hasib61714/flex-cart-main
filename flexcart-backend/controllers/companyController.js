@@ -878,20 +878,35 @@ const getCompanyDashboard = async (req, res) => {
         }
 
         // Get products grouped by category (with pending request count)
-        const [products] = await pool.query(
-            `SELECT p.*, cat.name as category_name, cat.icon as category_icon,
-                    COALESCE(req.request_count, 0) as request_count
-             FROM products p
-             LEFT JOIN categories cat ON p.category_id = cat.id
-             LEFT JOIN (
-               SELECT product_id, COUNT(*) as request_count
-               FROM product_requests
-               GROUP BY product_id
-             ) req ON p.id = req.product_id
-             WHERE p.company_id = ? AND p.status != 'deleted'
-             ORDER BY cat.name, p.created_at DESC`,
-            [companyId]
-        );
+        // Fallback: skip product_requests join if table doesn't exist yet
+        let products = [];
+        try {
+            [products] = await pool.query(
+                `SELECT p.*, cat.name as category_name, cat.icon as category_icon,
+                        COALESCE(req.request_count, 0) as request_count
+                 FROM products p
+                 LEFT JOIN categories cat ON p.category_id = cat.id
+                 LEFT JOIN (
+                   SELECT product_id, COUNT(*) as request_count
+                   FROM product_requests
+                   GROUP BY product_id
+                 ) req ON p.id = req.product_id
+                 WHERE p.company_id = ? AND p.status != 'deleted'
+                 ORDER BY p.created_at DESC`,
+                [companyId]
+            );
+        } catch (_e) {
+            try {
+                [products] = await pool.query(
+                    `SELECT p.*, cat.name as category_name, cat.icon as category_icon, 0 as request_count
+                     FROM products p
+                     LEFT JOIN categories cat ON p.category_id = cat.id
+                     WHERE p.company_id = ? AND p.status != 'deleted'
+                     ORDER BY p.created_at DESC`,
+                    [companyId]
+                );
+            } catch (_e2) { products = []; }
+        }
 
         // Group products by category
         const productsByCategory = {};
@@ -908,23 +923,27 @@ const getCompanyDashboard = async (req, res) => {
             productsByCategory[catName].products.push(product);
         });
 
-        // Get unread notifications count
-        const [unreadNotifs] = await pool.query(
-            'SELECT COUNT(*) as count FROM company_notifications WHERE company_id = ? AND is_read = 0',
-            [companyId]
-        );
+        // Get notifications (table may not exist in all deployments)
+        let unreadNotifs = [{ count: 0 }];
+        let notifications = [];
+        try {
+            [unreadNotifs] = await pool.query(
+                'SELECT COUNT(*) as count FROM company_notifications WHERE company_id = ? AND is_read = 0',
+                [companyId]
+            );
+            [notifications] = await pool.query(
+                `SELECT * FROM company_notifications
+                 WHERE company_id = ?
+                 ORDER BY created_at DESC
+                 LIMIT 20`,
+                [companyId]
+            );
+        } catch (_e) { /* company_notifications table may not exist yet */ }
 
-        // Get recent notifications
-        const [notifications] = await pool.query(
-            `SELECT * FROM company_notifications 
-             WHERE company_id = ? 
-             ORDER BY created_at DESC 
-             LIMIT 20`,
-            [companyId]
-        );
-
-        // Get recent orders
-        const [recentOrders] = await pool.query(
+        // Get recent orders (branches/deliveries tables may not exist yet)
+        let recentOrders = [];
+        try {
+            [recentOrders] = await pool.query(
                 `SELECT oi.*, o.order_number, o.order_status, o.current_status, o.branch_accepted_at, o.created_at as order_date,
                     o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
                     ab.name as assigned_branch_name,
@@ -932,20 +951,37 @@ const getCompanyDashboard = async (req, res) => {
                     d.status as delivery_status, d.delivery_boy_name, d.delivery_boy_phone, d.rejection_reason,
                     fb.name as from_branch_name, tb.name as to_branch_name,
                     u.username as customer_name, p.name as product_name
-             FROM order_items oi
-             JOIN orders o ON oi.order_id = o.id
-             JOIN users u ON o.user_id = u.id
-             JOIN products p ON oi.product_id = p.id
-             LEFT JOIN branches ab ON ab.id = o.assigned_branch_id
-             LEFT JOIN branches pb ON pb.id = o.previous_branch_id
-             LEFT JOIN deliveries d ON d.order_id = o.id
-             LEFT JOIN branches fb ON fb.id = d.from_branch_id
-             LEFT JOIN branches tb ON tb.id = d.to_branch_id
-             WHERE oi.company_id = ?
-             ORDER BY o.created_at DESC
-             LIMIT 10`,
-            [companyId]
-        );
+                 FROM order_items oi
+                 JOIN orders o ON oi.order_id = o.id
+                 JOIN users u ON o.user_id = u.id
+                 JOIN products p ON oi.product_id = p.id
+                 LEFT JOIN branches ab ON ab.id = o.assigned_branch_id
+                 LEFT JOIN branches pb ON pb.id = o.previous_branch_id
+                 LEFT JOIN deliveries d ON d.order_id = o.id
+                 LEFT JOIN branches fb ON fb.id = d.from_branch_id
+                 LEFT JOIN branches tb ON tb.id = d.to_branch_id
+                 WHERE oi.company_id = ?
+                 ORDER BY o.created_at DESC
+                 LIMIT 10`,
+                [companyId]
+            );
+        } catch (_e) {
+            try {
+                // Fallback: no branches/deliveries columns
+                [recentOrders] = await pool.query(
+                    `SELECT oi.*, o.order_number, o.order_status, o.created_at as order_date,
+                        o.shipping_address, u.username as customer_name, p.name as product_name
+                     FROM order_items oi
+                     JOIN orders o ON oi.order_id = o.id
+                     JOIN users u ON o.user_id = u.id
+                     JOIN products p ON oi.product_id = p.id
+                     WHERE oi.company_id = ?
+                     ORDER BY o.created_at DESC
+                     LIMIT 10`,
+                    [companyId]
+                );
+            } catch (_e2) { recentOrders = []; }
+        }
 
         const recentOrdersWithStatus = recentOrders.map(order => {
             const delivery = order.delivery_status
@@ -965,36 +1001,47 @@ const getCompanyDashboard = async (req, res) => {
         });
 
         // Get categories for product creation
-        const [categories] = await pool.query(
-            'SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order, name'
-        );
+        let categories = [];
+        try {
+            [categories] = await pool.query(
+                'SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order, name'
+            );
+        } catch (_e) {
+            try {
+                [categories] = await pool.query('SELECT * FROM categories ORDER BY name');
+            } catch (_e2) { categories = []; }
+        }
 
-        // Compute leaderboard rank
-        const [[dashRankRow]] = await pool.query(
-            `SELECT (SELECT COUNT(*)
-               FROM companies cx
-               WHERE cx.status = 'active'
-               AND (
-                 COALESCE(cx.total_sales, 0) * 10 +
-                 COALESCE((SELECT AVG(rx.rating) FROM product_reviews rx JOIN products px ON rx.product_id = px.id WHERE px.company_id = cx.id), 0) * 200 +
-                 COALESCE(cx.follower_count, 0) * 5
-               ) > (
-                 COALESCE(c.total_sales, 0) * 10 +
-                 COALESCE((SELECT AVG(ry.rating) FROM product_reviews ry JOIN products py ON ry.product_id = py.id WHERE py.company_id = c.id), 0) * 200 +
-                 COALESCE(c.follower_count, 0) * 5
-               )
-            ) + 1 AS company_rank
-            FROM companies c WHERE c.id = ?`,
-            [companyId]
-        );
+        // Compute leaderboard rank (product_reviews may not exist yet)
+        let companyRank = 1;
+        try {
+            const [[rankRow]] = await pool.query(
+                `SELECT (SELECT COUNT(*)
+                   FROM companies cx
+                   WHERE cx.status = 'active'
+                   AND (
+                     COALESCE(cx.total_sales, 0) * 10 +
+                     COALESCE((SELECT AVG(rx.rating) FROM product_reviews rx JOIN products px ON rx.product_id = px.id WHERE px.company_id = cx.id), 0) * 200 +
+                     COALESCE(cx.follower_count, 0) * 5
+                   ) > (
+                     COALESCE(c.total_sales, 0) * 10 +
+                     COALESCE((SELECT AVG(ry.rating) FROM product_reviews ry JOIN products py ON ry.product_id = py.id WHERE py.company_id = c.id), 0) * 200 +
+                     COALESCE(c.follower_count, 0) * 5
+                   )
+                ) + 1 AS company_rank
+                FROM companies c WHERE c.id = ?`,
+                [companyId]
+            );
+            if (rankRow) companyRank = Number(rankRow.company_rank);
+        } catch (_e) { /* product_reviews table may not exist yet */ }
 
         res.json({
             success: true,
             data: {
-                company: { ...company[0], company_rank: Number(dashRankRow.company_rank) },
+                company: { ...company[0], company_rank: companyRank },
                 productsByCategory: Object.values(productsByCategory),
                 totalProducts: products.length,
-                unreadNotifications: unreadNotifs[0].count,
+                unreadNotifications: unreadNotifs[0]?.count ?? 0,
                 notifications,
                 recentOrders: recentOrdersWithStatus,
                 categories

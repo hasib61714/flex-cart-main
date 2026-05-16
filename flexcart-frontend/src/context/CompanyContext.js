@@ -68,9 +68,9 @@ export const CompanyProvider = ({ children }) => {
         setDashboardData(null);
     };
 
-    const fetchCompanyDashboard = useCallback(async (companyId) => {
+    const fetchCompanyDashboard = useCallback(async (companyId, { silent = false } = {}) => {
         if (!isAuthenticated || !companyId) return;
-        setLoading(true);
+        if (!silent) setLoading(true);
         try {
             const res = await api.get(`/companies/dashboard/${companyId}`);
             if (res.data.success) {

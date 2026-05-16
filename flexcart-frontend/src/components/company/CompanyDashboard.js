@@ -93,7 +93,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
   useEffect(() => {
     if (!activeCompany?.id || activeCompany.verification_status !== 'approved') return;
     const interval = setInterval(() => {
-      fetchCompanyDashboard(activeCompany.id);
+      fetchCompanyDashboard(activeCompany.id, { silent: true });
       fetchCompanyNotifications(activeCompany.id);
     }, 8000);
     return () => clearInterval(interval);
