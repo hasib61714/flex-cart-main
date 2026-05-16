@@ -597,9 +597,10 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                         {detailedProduct.image_url ? (
                           <img src={getImageUrl(detailedProduct.image_url)} alt={detailedProduct.name} />
                         ) : <Package size={32} />}
+                      </div>
                     </div>
 
-                    {/* Similar products */}
+                    {/* Similar products */
                     {similarProducts.slice(0, 5).map(sp => (
                       <div
                         key={sp.id}

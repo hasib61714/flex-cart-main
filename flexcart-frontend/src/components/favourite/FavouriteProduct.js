@@ -108,7 +108,7 @@ const FavouriteProduct = ({ onRequireAuth }) => {
                       {fav.image_url ? (
                         <img src={getImageUrl(fav.image_url)} alt={fav.name} />
                       ) : (
-                      ) : <Package size={32} />}
+                        <Package size={32} />
                       )}
                       {fav.discount_percentage > 0 && (
                         <span className="fp-discount-badge">
