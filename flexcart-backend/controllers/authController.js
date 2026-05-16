@@ -245,8 +245,8 @@ const authController = {
       if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid password' });
       if (user.id === req.user.id) return res.status(400).json({ success: false, message: 'Cannot link to same account' });
 
-      await pool.query('INSERT IGNORE INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?)', [req.user.id, user.id]);
-      await pool.query('INSERT IGNORE INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?)', [user.id, req.user.id]);
+      await pool.query('INSERT INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?) ON CONFLICT DO NOTHING', [req.user.id, user.id]);
+      await pool.query('INSERT INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?) ON CONFLICT DO NOTHING', [user.id, req.user.id]);
 
       res.json({ success: true, message: 'Account linked successfully' });
     } catch (error) {

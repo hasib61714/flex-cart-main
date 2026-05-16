@@ -104,9 +104,36 @@ const { Pool } = require('pg');
 
     getConnection: async () => {
       const client = await pgPool.connect();
+
+      // Build a query function that runs on THIS client (so transactions work correctly)
+      const clientQuery = async (sql, params) => {
+        const args = Array.isArray(params) ? params : [];
+        let s = pgParams(sql);
+        const isInsert = /^\s*INSERT\s+/i.test(sql);
+        let addedReturning = false;
+        if (isInsert && !/RETURNING/i.test(s)) {
+          s = s.replace(/;?\s*$/, ' RETURNING id');
+          addedReturning = true;
+        }
+        try {
+          const result = await client.query(s, args.length ? args : undefined);
+          const rows = result.rows || [];
+          if (addedReturning && rows.length > 0 && rows[0].id !== undefined) {
+            rows.insertId = rows[0].id;
+          }
+          return [rows, result.fields || []];
+        } catch (err) {
+          if (addedReturning) {
+            const result2 = await client.query(pgParams(sql), args.length ? args : undefined);
+            return [result2.rows || [], result2.fields || []];
+          }
+          throw err;
+        }
+      };
+
       return {
-        query:            (sql, p) => pgQuery(sql, p),
-        execute:          (sql, p) => pgQuery(sql, p),
+        query:            clientQuery,
+        execute:          clientQuery,
         release:          ()       => client.release(),
         beginTransaction: ()       => client.query('BEGIN'),
         commit:           ()       => client.query('COMMIT'),
@@ -508,6 +535,43 @@ const { Pool } = require('pg');
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`,
+
+        // ── migration_v6: delivery zone pricing + revenue ────────────────────
+        `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_charge DECIMAL(10,2) NOT NULL DEFAULT 0.00`,
+        `ALTER TABLE orders ALTER COLUMN shipping_address DROP NOT NULL`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_cod_allowed SMALLINT NOT NULL DEFAULT 0`,
+
+        `CREATE TABLE IF NOT EXISTS revenue_history (
+          id SERIAL PRIMARY KEY,
+          order_id INT NOT NULL,
+          order_number VARCHAR(50) NOT NULL,
+          sale_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          product_total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+          discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+          delivery_charge DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          commission_rate DECIMAL(5,2) NOT NULL DEFAULT 5.00,
+          commission_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+          delivery_revenue DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          source_type VARCHAR(100) NOT NULL DEFAULT 'cart',
+          FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+          CONSTRAINT unique_revenue_order UNIQUE (order_id)
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS category_commissions (
+          id SERIAL PRIMARY KEY,
+          category_id INT NOT NULL,
+          category_name VARCHAR(100) NOT NULL DEFAULT '',
+          commission_rate DECIMAL(5,2) NOT NULL DEFAULT 5.00,
+          updated_by_user_id INT DEFAULT NULL,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT uq_category_commission UNIQUE (category_id)
+        )`,
+
+        `INSERT INTO platform_settings (setting_key, setting_value, description) VALUES
+          ('delivery_inside_dhaka',   '60.00',  'Base delivery charge inside Dhaka (BDT)'),
+          ('delivery_outside_dhaka',  '120.00', 'Base delivery charge outside Dhaka (BDT)'),
+          ('delivery_extra_per_item', '30.00',  'Additional charge per extra item beyond the first (BDT)')
+        ON CONFLICT (setting_key) DO NOTHING`,
       ];
 
       for (const sql of migrations) {

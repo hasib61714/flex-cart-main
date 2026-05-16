@@ -475,10 +475,10 @@ const superAdminController = {
       await pool.query(
         `INSERT INTO category_commissions (category_id, category_name, commission_rate, updated_by_user_id)
          VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           commission_rate = VALUES(commission_rate),
-           updated_by_user_id = VALUES(updated_by_user_id),
-           category_name = VALUES(category_name)`,
+         ON CONFLICT (category_id) DO UPDATE SET
+           commission_rate = EXCLUDED.commission_rate,
+           updated_by_user_id = EXCLUDED.updated_by_user_id,
+           category_name = EXCLUDED.category_name`,
         [categoryId, catName, rate, req.user.id]
       );
 

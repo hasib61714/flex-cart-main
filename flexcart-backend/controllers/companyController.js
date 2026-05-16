@@ -1297,8 +1297,8 @@ const assignOrderToBranch = async (req, res) => {
         await connection.query(
             `INSERT INTO company_branch_preferences (company_id, branch_id, usage_count, last_assigned_at)
              VALUES (?, ?, 1, NOW())
-             ON DUPLICATE KEY UPDATE
-               usage_count = usage_count + 1,
+             ON CONFLICT (company_id, branch_id) DO UPDATE SET
+               usage_count = company_branch_preferences.usage_count + 1,
                last_assigned_at = NOW()`,
             [companyId, selectedBranch.id]
         );
@@ -1569,9 +1569,9 @@ const addProduct = async (req, res) => {
                     `INSERT INTO company_promo_codes
                      (company_id, product_id, code, discount_type, discount_value)
                      VALUES (?, ?, ?, 'percentage', ?)
-                     ON DUPLICATE KEY UPDATE discount_value = ?`,
+                     ON CONFLICT (company_id, code) DO UPDATE SET discount_value = EXCLUDED.discount_value`,
                     [company_id, result.insertId, promo_code,
-                     parseFloat(promo_discount_value), parseFloat(promo_discount_value)]
+                     parseFloat(promo_discount_value)]
                 );
             } catch (_e) { /* company_promo_codes table may not exist yet */ }
         }

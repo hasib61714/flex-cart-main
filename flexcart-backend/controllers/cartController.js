@@ -85,8 +85,8 @@ const cartController = {
 
       await pool.query(
         `INSERT INTO cart (user_id, product_id, quantity, negotiated_price) VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE quantity = ?, negotiated_price = COALESCE(?, negotiated_price), updated_at = NOW()`,
-        [req.user.id, product_id, totalQty, negPrice, totalQty, negPrice]
+         ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = EXCLUDED.quantity, negotiated_price = COALESCE(EXCLUDED.negotiated_price, cart.negotiated_price), updated_at = NOW()`,
+        [req.user.id, product_id, totalQty, negPrice]
       );
 
       const [cartCount] = await pool.query('SELECT SUM(quantity) as count FROM cart WHERE user_id = ?', [req.user.id]);
