@@ -282,44 +282,51 @@ const superAdminController = {
   getRevenueAnalytics: async (req, res) => {
     try {
       const { period = 'monthly', from_date, to_date } = req.query;
-      let fmt = '%Y-%m';
-      if (period === 'daily')  fmt = '%Y-%m-%d';
-      if (period === 'yearly') fmt = '%Y';
+
+      let rhFmt, ordFmt;
+      if (period === 'daily') {
+        rhFmt  = "TO_CHAR(sale_date, 'YYYY-MM-DD')";
+        ordFmt = "TO_CHAR(created_at, 'YYYY-MM-DD')";
+      } else if (period === 'yearly') {
+        rhFmt  = "TO_CHAR(sale_date, 'YYYY')";
+        ordFmt = "TO_CHAR(created_at, 'YYYY')";
+      } else {
+        rhFmt  = "TO_CHAR(sale_date, 'YYYY-MM')";
+        ordFmt = "TO_CHAR(created_at, 'YYYY-MM')";
+      }
 
       let dateFilter = '';
       const dateParams = [];
       if (period === 'custom' && from_date && to_date) {
-        dateFilter = 'AND sale_date BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)';
+        dateFilter = "AND sale_date BETWEEN ? AND ?::date + INTERVAL '1 day'";
         dateParams.push(from_date, to_date);
       }
 
       const [productRevenue] = await pool.query(
-        `SELECT DATE_FORMAT(sale_date, ?) as label,
+        `SELECT ${rhFmt} as label,
                 SUM(product_total - discount_amount) as amount,
                 SUM(commission_amount) as commission,
                 COUNT(*) as count
          FROM revenue_history WHERE 1=1 ${dateFilter} GROUP BY label ORDER BY label DESC LIMIT 12`,
-        [fmt, ...dateParams]
+        [...dateParams]
       ).catch(() => [[]]);
 
       const [deliveryRevenue] = await pool.query(
-        `SELECT DATE_FORMAT(sale_date, ?) as label,
+        `SELECT ${rhFmt} as label,
                 SUM(delivery_revenue) as amount,
                 COUNT(*) as count
          FROM revenue_history WHERE 1=1 ${dateFilter} GROUP BY label ORDER BY label DESC LIMIT 12`,
-        [fmt, ...dateParams]
+        [...dateParams]
       ).catch(() => [[]]);
 
       const [orderRevenueFallback] = await pool.query(
-        `SELECT DATE_FORMAT(created_at, ?) as label, SUM(total_amount) as amount, COUNT(*) as count
-         FROM orders WHERE payment_status='paid' GROUP BY label ORDER BY label DESC LIMIT 12`,
-        [fmt]
+        `SELECT ${ordFmt} as label, SUM(total_amount) as amount, COUNT(*) as count
+         FROM orders WHERE payment_status='paid' GROUP BY label ORDER BY label DESC LIMIT 12`
       );
 
       const [adRevenue] = await pool.query(
-        `SELECT DATE_FORMAT(created_at, ?) as label, SUM(fee_amount) as amount, COUNT(*) as count
-         FROM ad_promotions GROUP BY label ORDER BY label DESC LIMIT 12`,
-        [fmt]
+        `SELECT ${ordFmt} as label, SUM(fee_amount) as amount, COUNT(*) as count
+         FROM ad_promotions GROUP BY label ORDER BY label DESC LIMIT 12`
       );
 
       const orders = productRevenue.length > 0 ? productRevenue.reverse() : orderRevenueFallback.reverse();
@@ -344,14 +351,14 @@ const superAdminController = {
       let dateFilter = '';
       const dateParams = [];
       if (period === 'custom' && from_date && to_date) {
-        dateFilter = 'AND rh.sale_date BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)';
+        dateFilter = "AND rh.sale_date BETWEEN ? AND ?::date + INTERVAL '1 day'";
         dateParams.push(from_date, to_date);
       } else if (period === 'daily') {
-        dateFilter = 'AND DATE(rh.sale_date) = CURDATE()';
+        dateFilter = 'AND rh.sale_date::date = CURRENT_DATE';
       } else if (period === 'monthly') {
-        dateFilter = 'AND YEAR(rh.sale_date) = YEAR(NOW()) AND MONTH(rh.sale_date) = MONTH(NOW())';
+        dateFilter = "AND DATE_TRUNC('month', rh.sale_date) = DATE_TRUNC('month', NOW())";
       } else if (period === 'yearly') {
-        dateFilter = 'AND YEAR(rh.sale_date) = YEAR(NOW())';
+        dateFilter = "AND DATE_TRUNC('year', rh.sale_date) = DATE_TRUNC('year', NOW())";
       }
 
       let typeFilter = '';
