@@ -23,7 +23,8 @@ async function loadPricingMap() {
     'route_branch_to_branch','route_branch_to_address'
   ];
   try {
-    const [rows] = await pool.query('SELECT setting_key, setting_value FROM platform_settings WHERE setting_key IN (?)', [keys]);
+    const placeholders = keys.map(() => '?').join(',');
+    const [rows] = await pool.query(`SELECT setting_key, setting_value FROM platform_settings WHERE setting_key IN (${placeholders})`, keys);
     const m = {};
     for (const r of rows) m[r.setting_key] = Number(r.setting_value);
     return m;

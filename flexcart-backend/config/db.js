@@ -156,9 +156,13 @@ const { Pool } = require('pg');
       initSQL = convertSQL(initSQL);
 
       // Split on ; boundaries and skip pure INSERT seed statements
+      // Strip leading SQL comments before testing so "-- comment\nINSERT..." is still excluded
       const stmts = initSQL.split(';')
         .map(s => s.trim())
-        .filter(s => s.length > 5 && !/^\s*INSERT\s+/i.test(s));
+        .filter(s => {
+          const noComments = s.replace(/--[^\n]*/g, '').trim();
+          return noComments.length > 5 && !/^\s*INSERT\s+/i.test(noComments);
+        });
 
       for (const stmt of stmts) {
         try { await pgPool.query(stmt); } catch (_) { /* table exists, etc. */ }
@@ -534,6 +538,14 @@ const { Pool } = require('pg');
           used SMALLINT NOT NULL DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`,
+
+        // ── migration_v5_delivery_status ──────────────────────────────────────
+        `ALTER TABLE orders ADD COLUMN IF NOT EXISTS previous_branch_id INT NULL DEFAULT NULL`,
+
+        // ── deduplicate support_info (seeded on every restart due to comment-prefixed INSERT) ──
+        `DELETE FROM support_info WHERE id NOT IN (
+          SELECT MIN(id) FROM support_info GROUP BY type, label, value
         )`,
 
         // ── migration_v6: delivery zone pricing + revenue ────────────────────

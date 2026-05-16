@@ -42,9 +42,10 @@ function parseSettingNumber(value, fallback) {
 
 async function loadPlatformSettingsMap(keys) {
   try {
+    const placeholders = keys.map(() => '?').join(',');
     const [rows] = await pool.query(
-      `SELECT setting_key, setting_value FROM platform_settings WHERE setting_key IN (?)`,
-      [keys]
+      `SELECT setting_key, setting_value FROM platform_settings WHERE setting_key IN (${placeholders})`,
+      keys
     );
     const map = {};
     for (const r of rows) map[r.setting_key] = r.setting_value;

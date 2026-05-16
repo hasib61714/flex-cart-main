@@ -720,13 +720,14 @@ const orderController = {
       const deliveriesByOrderId = {};
       if (orders.length > 0) {
         const orderIds = orders.map(o => o.id);
+        const placeholders = orderIds.map(() => '?').join(',');
         const [deliveries] = await pool.query(
           `SELECT d.*, fb.name as from_branch_name, tb.name as to_branch_name
            FROM deliveries d
            LEFT JOIN branches fb ON fb.id = d.from_branch_id
            LEFT JOIN branches tb ON tb.id = d.to_branch_id
-           WHERE d.order_id IN (?)`,
-          [orderIds]
+           WHERE d.order_id IN (${placeholders})`,
+          orderIds
         );
         for (const d of deliveries) deliveriesByOrderId[d.order_id] = d;
       }

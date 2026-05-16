@@ -605,7 +605,8 @@ INSERT INTO support_info (type, label, value, icon, sort_order) VALUES
 ('social', 'Facebook', 'https://facebook.com/flexcart', 'facebook', 7),
 ('social', 'Twitter', 'https://twitter.com/flexcart', 'twitter', 8),
 ('faq', 'Return Policy', 'You can return any product within 30 days of purchase', 'help-circle', 9),
-('faq', 'Shipping', 'Free shipping on orders above $50', 'truck', 10);
+('faq', 'Shipping', 'Free shipping on orders above $50', 'truck', 10)
+ON DUPLICATE KEY UPDATE label = label;
 
 -- Insert Background Themes
 INSERT INTO background_themes (name, type, preview_url, resource_url, category, sort_order) VALUES

@@ -423,13 +423,14 @@ const getProductById = async (req, res) => {
         // Fetch all comment replies in ONE query (fix N+1)
         if (comments.length > 0) {
             const parentIds = comments.map(c => c.id);
+            const placeholders = parentIds.map(() => '?').join(',');
             const [allReplies] = await pool.query(
                 `SELECT pc.*, u.username, u.profile_image
                  FROM product_comments pc
                  JOIN users u ON pc.user_id = u.id
-                 WHERE pc.parent_id IN (?) AND pc.status = 'active'
+                 WHERE pc.parent_id IN (${placeholders}) AND pc.status = 'active'
                  ORDER BY pc.created_at ASC`,
-                [parentIds]
+                parentIds
             );
             const repliesMap = {};
             allReplies.forEach(reply => {

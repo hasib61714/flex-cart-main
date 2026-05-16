@@ -2030,7 +2030,7 @@ const getLeaderboard = async (req, res) => {
                         COALESCE(cr.avg_rating, 0) * 200 +
                         COALESCE(c.follower_count, 0) * 5
                     ) DESC
-                ) as \`rank\`
+                ) as "rank"
              FROM companies c
              JOIN users u ON c.user_id = u.id
              LEFT JOIN (
@@ -2202,7 +2202,7 @@ const searchCompanies = async (req, res) => {
         const q = (req.query.q || '').trim();
         if (q.length < 1) return res.json({ success: true, data: [] });
         const [rows] = await pool.query(
-            `SELECT id, name, company_logo FROM companies WHERE status = 'active' AND name LIKE ? ORDER BY name LIMIT 15`,
+            `SELECT id, company_name AS name, company_logo FROM companies WHERE status = 'active' AND company_name ILIKE ? ORDER BY company_name LIMIT 15`,
             [`%${q}%`]
         );
         res.json({ success: true, data: rows });
