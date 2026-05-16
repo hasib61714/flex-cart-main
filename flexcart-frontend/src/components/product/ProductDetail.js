@@ -8,7 +8,7 @@ import BuyNowModal from '../cart/BuyNowModal';
 import api from '../../services/api';
 import requestProductService from '../../services/requestProductService';
 import { toast } from 'react-toastify';
-import { ShoppingCart, Zap, Bot, Heart, ArrowLeftRight, Bell, Star, MessageSquare, Truck } from 'lucide-react';
+import { ShoppingCart, Zap, Bot, Heart, ArrowLeftRight, Bell, Star, MessageSquare, Truck, Users, UserCheck, UserPlus, Handshake, Gift, Banknote, Lock, Check, BarChart2, Package, Award, Crown, Gem } from 'lucide-react';
 import './ProductDetail.css';
 
 // productId — product to display; onClose — called to dismiss; onRequireAuth — called when login is needed
@@ -154,8 +154,14 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
     };
 
     const getBadgeIcon = (badge) => {
-        const badges = { bronze: '🥉', silver: '🥈', gold: '🥇', crown: '👑', diamond: '💎' };
-        return badges[badge] || '🥉';
+        const badges = {
+            bronze: <Award size={14} color="#cd7f32" />,
+            silver: <Award size={14} color="#a8a9ad" />,
+            gold: <Award size={14} color="#ffd700" />,
+            crown: <Crown size={14} color="#ffd700" />,
+            diamond: <Gem size={14} color="#b9f2ff" />
+        };
+        return badges[badge] || <Award size={14} color="#cd7f32" />;
     };
 
     if (loading) {
@@ -200,8 +206,8 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                             )}
                         </h3>
                         <div className="product-detail__company-stats">
-                            <span>⭐ {product.company_rating?.toFixed(1) || '0.0'}</span>
-                            <span>👥 {product.follower_count || 0} followers</span>
+                            <span><Star size={12} fill="currentColor" /> {product.company_rating?.toFixed(1) || '0.0'}</span>
+                            <span><Users size={12} /> {product.follower_count || 0} followers</span>
                         </div>
                     </div>
                 </div>
@@ -210,7 +216,7 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                         className={`product-detail__follow-btn ${product.isFollowingCompany ? 'following' : ''}`}
                         onClick={handleFollowCompany}
                     >
-                        {product.isFollowingCompany ? '✓ Following' : '+ Follow'}
+                        {product.isFollowingCompany ? <><UserCheck size={14} /> Following</> : <><UserPlus size={14} /> Follow</>}
                     </button>
                 )}
             </div>
@@ -273,7 +279,7 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                     <div className="product-detail__price-section">
                         {negotiatedPrice ? (
                             <div className="product-detail__negotiated">
-                                <span className="product-detail__negotiated-label">🤝 Your Negotiated Price</span>
+                                <span className="product-detail__negotiated-label"><Handshake size={14} /> Your Negotiated Price</span>
                                 <span className="product-detail__negotiated-price">৳{negotiatedPrice.toFixed(2)}</span>
                                 <span className="product-detail__original-price strikethrough">
                                     ৳{product.max_price?.toFixed(2) || product.current_price?.toFixed(2)}
@@ -288,14 +294,14 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                             </div>
                         )}
                         {product.points_reward > 0 && (
-                            <span className="product-detail__points">🎁 Earn {product.points_reward} points</span>
+                            <span className="product-detail__points"><Gift size={13} /> Earn {product.points_reward} points</span>
                         )}
                         {product.is_cod_allowed ? (
-                            <span className="product-detail__cod-badge">💵 Cash on Delivery Available</span>
+                            <span className="product-detail__cod-badge"><Banknote size={13} /> Cash on Delivery Available</span>
                         ) : null}
                         {product.is_cod_allowed && product.cod_advance_amount != null && parseFloat(product.cod_advance_amount) > 0 ? (
                             <div className="product-detail__cod-advance">
-                                🔒 To Confirm Order Pay: ৳{parseFloat(product.cod_advance_amount).toFixed(2)}
+                                <Lock size={13} /> To Confirm Order Pay: ৳{parseFloat(product.cod_advance_amount).toFixed(2)}
                             </div>
                         ) : null}
                     </div>
@@ -327,7 +333,7 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                                     onClick={handleRequestProduct}
                                     disabled={requested || requesting}
                                 >
-                                    {requested ? '✓ Requested' : requesting ? '...' : '🔔 Notify Me'}
+                                    {requested ? <><Check size={13} /> Requested</> : requesting ? '...' : <><Bell size={13} /> Notify Me</>}
                                 </button>
                             )}
                         </div>
@@ -349,29 +355,29 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                                 title={product.isSeller ? 'You cannot add your own product to cart' : undefined}
                                 style={product.isSeller ? { cursor: 'not-allowed' } : {}}
                             >
-                                🛒 {product.isSeller ? 'Your Product' : 'Add to Cart'}
+                                <ShoppingCart size={16} /> {product.isSeller ? 'Your Product' : 'Add to Cart'}
                             </button>
                             {!product.isSeller && product.is_in_stock && user && (
                                 <button
                                     className="product-detail__buy-now-btn"
                                     onClick={() => setShowBuyNow(true)}
                                 >
-                                    ⚡ Buy Now
+                                    <Zap size={16} /> Buy Now
                                 </button>
                             )}
                             {user && !product.isSeller && (
                                 <button className="product-detail__negotiate-btn" onClick={() => setShowNegotiator(true)} title="AI Cost Negotiator">
-                                    🤖
+                                    <Bot size={18} />
                                 </button>
                             )}
                             <button className={`product-detail__fav-btn ${isFavourite ? 'active' : ''}`} onClick={toggleFavourite}>
-                                {isFavourite ? '❤️' : '🤍'}
+                                {isFavourite ? <Heart size={18} fill="currentColor" /> : <Heart size={18} />}
                             </button>
                         </div>
 
                         {!product.isSeller && (
                             <button className="product-detail__compare-btn" onClick={() => setShowCompare(true)}>
-                                🔄 Compare with Similar Products
+                                <ArrowLeftRight size={15} /> Compare with Similar Products
                             </button>
                         )}
                     </div>
@@ -379,7 +385,7 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                     {/* Seller View */}
                     {product.isSeller && (
                         <div className="product-detail__seller-info">
-                            <h3>📊 Seller Information</h3>
+                            <h3><BarChart2 size={16} /> Seller Information</h3>
                             <div className="seller-price-info">
                                 <div className="price-row"><span>Minimum Price (Hidden):</span><span className="min-price">৳{product.min_price?.toFixed(2)}</span></div>
                                 <div className="price-row"><span>Maximum Price:</span><span>৳{product.max_price?.toFixed(2)}</span></div>
@@ -396,10 +402,10 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
             <div className="product-detail__tabs">
                 <div className="product-detail__tab-headers">
                     <button className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-                        ⭐ Reviews ({product.total_ratings || 0})
+                        <Star size={14} /> Reviews ({product.total_ratings || 0})
                     </button>
                     <button className={`tab-btn ${activeTab === 'comments' ? 'active' : ''}`} onClick={() => setActiveTab('comments')}>
-                        💬 Comments ({product.comments?.length || 0})
+                        <MessageSquare size={14} /> Comments ({product.comments?.length || 0})
                     </button>
                 </div>
                 <div className="product-detail__tab-content">
@@ -427,7 +433,7 @@ const ProductDetail = ({ productId, onClose, onRequireAuth }) => {
                                             onError={(e) => { e.target.src = '/placeholder.png'; }}
                                         />
                                     ) : (
-                                        <div className="related-product-card__placeholder">📦</div>
+                                        <div className="related-product-card__placeholder"><Package size={32} /></div>
                                     )}
                                     {p.is_cod_allowed && p.is_in_stock && (
                                         <span className="related-product-card__cod">COD</span>
