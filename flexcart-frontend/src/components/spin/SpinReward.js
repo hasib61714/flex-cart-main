@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiGift, FiClock } from 'react-icons/fi';
+import { Zap, Star, Sparkles, RefreshCw } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import spinRewardService from '../../services/spinRewardService';
 import { SPIN_WHEEL_SEGMENTS } from '../../utils/constants';
@@ -153,10 +154,10 @@ const SpinReward = () => {
   };
 
   const getRewardIcon = (type) => {
-    if (type === 'points') return '⚡';
-    if (type === 'stars') return '⭐';
-    if (type === 'discount') return '🎟️';
-    return '🔄';
+    if (type === 'points') return <Zap size={24} />;
+    if (type === 'stars') return <Star size={24} fill="currentColor" />;
+    if (type === 'discount') return <Sparkles size={24} />;
+    return <RefreshCw size={24} />;
   };
 
   const getRewardText = (item) => {
@@ -227,7 +228,7 @@ const SpinReward = () => {
                     </text>
                     <text x={iconX} y={iconY} fontSize="14" textAnchor="middle" dominantBaseline="middle"
                       transform={`rotate(${midAngle}, ${iconX}, ${iconY})`}>
-                      {segment.type === 'points' ? '⚡' : segment.type === 'stars' ? '⭐' : '🔄'}
+                    {segment.type === 'points' ? <Zap size={12} style={{ display: 'inline' }} /> : segment.type === 'stars' ? <Star size={12} fill="currentColor" style={{ display: 'inline' }} /> : <RefreshCw size={12} style={{ display: 'inline' }} />}
                     </text>
                   </g>
                 );
@@ -249,9 +250,9 @@ const SpinReward = () => {
           whileTap={canSpin && !spinning ? { scale: 0.97 } : {}}
         >
           {spinning ? (
-            '🎰 Spinning...'
+            'Spinning...'
           ) : canSpin ? (
-            '🎰 SPIN NOW!'
+            'SPIN NOW!'
           ) : (
             <span className="sr-countdown-text">
               <FiClock size={16} />
@@ -272,7 +273,7 @@ const SpinReward = () => {
               {getRewardIcon(reward.type)}
             </div>
             <div className="sr-result-info">
-              <h3>{reward.type !== 'nothing' ? '🎉 You Won!' : 'Try Again!'}</h3>
+              <h3>{reward.type !== 'nothing' ? <><Sparkles size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />You Won!</> : 'Try Again!'}</h3>
               <p className="sr-result-label">{reward.label}</p>
             </div>
           </motion.div>

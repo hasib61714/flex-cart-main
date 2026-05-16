@@ -11,6 +11,7 @@ import { CompanyContext } from '../../context/CompanyContext';
 import { NavigationContext } from '../../context/NavigationContext';
 import { addSearchHistory, getMostRecentProductId } from '../../utils/searchHistory';
 import { toast } from 'react-toastify';
+import { Package, ShoppingCart } from 'lucide-react';
 import './Home.css';
 
 const INTERACTION_EVENT_NAME = 'flexcart:interaction';
@@ -319,7 +320,7 @@ const Home = ({ category, sort, filters, onRequireAuth, showRecommendations }) =
 
       {products.length === 0 && !loading && (
         <div className="no-products">
-          <span className="no-products-icon">📦</span>
+          <Package size={48} className="no-products-icon" />
           <h3>No products found</h3>
           <p>Try adjusting your filters or search criteria</p>
         </div>
@@ -341,7 +342,7 @@ const Home = ({ category, sort, filters, onRequireAuth, showRecommendations }) =
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
         >
-          <div className="drag-cart-icon">🛒</div>
+          <ShoppingCart size={32} className="drag-cart-icon" />
           <span>{draggingProduct ? `Add "${draggingProduct.name}" to cart` : 'Drop to add to cart'}</span>
         </motion.div>
       )}

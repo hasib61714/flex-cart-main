@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiHeart, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
+import { Heart, Package } from 'lucide-react';
 import { CartContext } from '../../context/CartContext';
 import favouriteService from '../../services/favouriteService';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -84,7 +85,7 @@ const FavouriteProduct = ({ onRequireAuth }) => {
 
         {favourites.length === 0 ? (
           <div className="fp-empty">
-            <div className="fp-empty-icon">❤️</div>
+            <Heart size={48} fill="currentColor" />
             <h3>No favourites yet</h3>
             <p>Products you love will appear here</p>
           </div>
@@ -107,7 +108,7 @@ const FavouriteProduct = ({ onRequireAuth }) => {
                       {fav.image_url ? (
                         <img src={getImageUrl(fav.image_url)} alt={fav.name} />
                       ) : (
-                        <span className="fp-no-img">📦</span>
+                      ) : <Package size={32} />}
                       )}
                       {fav.discount_percentage > 0 && (
                         <span className="fp-discount-badge">

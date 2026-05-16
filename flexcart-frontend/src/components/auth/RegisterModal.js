@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import Modal from '../common/Modal';
 import { AuthContext } from '../../context/AuthContext';
 import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiUserPlus } from 'react-icons/fi';
+import { ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { validateEmail, isValidUsername, isValidPhone } from '../../utils/validators';
@@ -81,7 +82,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="auth-logo-section">
           <span className="auth-logo">FlexC</span>
-          <span className="auth-logo-cart">🛒</span>
+          <span className="auth-logo-cart"><ShoppingCart size={20} /></span>
           <p className="auth-subtitle">Join FlexCart today</p>
         </div>
 

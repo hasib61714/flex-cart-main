@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPackage, FiBell, FiTrash2, FiX } from 'react-icons/fi';
+import { ClipboardList, Package, Clock, Check } from 'lucide-react';
 import requestProductService from '../../services/requestProductService';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ProductDetail from '../home/ProductDetail';
@@ -52,9 +53,9 @@ const RequestProduct = () => {
 
       {requests.length === 0 ? (
         <div className="empty-state">
-          <span>📋</span>
+          <ClipboardList size={48} />
           <h3>No product requests</h3>
-          <p>When a product is out of stock, press <strong>"🔔 Notify Me"</strong> on the product page to be notified when it's available.</p>
+          <p>When a product is out of stock, press <strong><FiBell size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Notify Me</strong> on the product page to be notified when it's available.</p>
         </div>
       ) : (
         <div className="request-list">
@@ -74,7 +75,7 @@ const RequestProduct = () => {
                 <div className="request-img">
                   {req.image_url ? (
                     <img src={getImageUrl(req.image_url)} alt={req.name} />
-                  ) : <span>📦</span>}
+                  ) : <Package size={32} />}
                 </div>
                 <div className="request-info">
                   <h4>{req.name}</h4>
@@ -88,9 +89,9 @@ const RequestProduct = () => {
                       <FiBell size={13} /> Now Available!
                     </span>
                   ) : (
-                    <span className="status-waiting">⏳ Waiting</span>
+                    <span className="status-waiting"><Clock size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Waiting</span>
                   )}
-                  {req.is_notified ? <span className="status-notified">✓ Notified</span> : null}
+                  {req.is_notified ? <span className="status-notified"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Notified</span> : null}
                 </div>
                 <button
                   className="request-remove-btn"

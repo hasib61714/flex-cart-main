@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag } from 'react-icons/fi';
+import { ShoppingCart, Package } from 'lucide-react';
 import { CartContext } from '../../context/CartContext';
 import { AuthContext } from '../../context/AuthContext';
 import PaymentModal from './PaymentModal';
@@ -66,7 +67,7 @@ const CartDropdown = ({ onClose }) => {
           <button className="cart-close-btn" onClick={onClose}><FiX size={18} /></button>
         </div>
         <div className="cart-empty">
-          <span className="cart-empty-icon">🛒</span>
+          <ShoppingCart size={40} />
           <p>Please log in to view your cart</p>
         </div>
       </motion.div>
@@ -89,7 +90,7 @@ const CartDropdown = ({ onClose }) => {
 
         {cartItems.length === 0 ? (
           <div className="cart-empty">
-            <span className="cart-empty-icon">🛒</span>
+            <ShoppingCart size={40} />
             <p>Your cart is empty</p>
             <p className="cart-empty-sub">Start shopping to add items!</p>
           </div>
@@ -133,7 +134,7 @@ const CartDropdown = ({ onClose }) => {
                   <div className="cart-item-img">
                     {item.image_url ? (
                       <img src={getImageUrl(item.image_url)} alt={item.name} />
-                    ) : <span>📦</span>}
+                    ) : <Package size={32} />}
                   </div>
 
                   <div className="cart-item-details">

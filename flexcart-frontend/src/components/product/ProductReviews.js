@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { Check } from 'lucide-react';
 import './ProductReviews.css';
 
 const AVATAR_COLORS = ['#2563eb','#7c3aed','#059669','#dc2626','#d97706','#0284c7','#db2777'];
@@ -129,7 +130,7 @@ const ProductReviews = ({ productId, reviews = [], onReviewAdded }) => {
                                             })()}
                                         </div>
                                         {review.is_verified_purchase === 1 && (
-                                            <span className="review-item__verified">✓ Verified Purchase</span>
+                                            <span className="review-item__verified"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Verified Purchase</span>
                                         )}
                                     </div>
                                 </div>

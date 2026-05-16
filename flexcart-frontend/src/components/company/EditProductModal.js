@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { CompanyContext } from '../../context/CompanyContext';
-import { Upload, X, Pencil } from 'lucide-react';
+import { Upload, X, Pencil, Target, Star } from 'lucide-react';
 import api from '../../services/api';
 import './AddProductModal.css';
 
@@ -553,11 +553,11 @@ const EditProductModal = ({ product, companyId, categories, onClose, onProductUp
                   <span>৳{parseFloat(formData.min_price || 0).toFixed(2)}</span>
                 </div>
                 <div className="apm-price-row apm-reward-row">
-                  <span>🎯 Auto Points Reward:</span>
+                  <span><Target size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Auto Points Reward:</span>
                   <span>+{autoPoints} pts</span>
                 </div>
                 <div className="apm-price-row apm-reward-row">
-                  <span>⭐ Auto Stars Reward:</span>
+                  <span><Star size={13} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Auto Stars Reward:</span>
                   <span>+{autoStars} ★</span>
                 </div>
               </div>

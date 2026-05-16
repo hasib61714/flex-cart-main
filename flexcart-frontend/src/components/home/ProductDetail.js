@@ -4,6 +4,7 @@ import {
   FiShoppingCart, FiStar, FiPackage, FiZap, FiMinus, FiPlus,
   FiChevronLeft, FiChevronRight, FiAlertCircle, FiMessageCircle, FiBell, FiCamera
 } from 'react-icons/fi';
+import { Bot, FileText, RefreshCw, FolderOpen, Banknote, Package, Star, Zap } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { CartContext } from '../../context/CartContext';
 import productService from '../../services/productService';
@@ -215,7 +216,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
               ) : detailedProduct.image_url ? (
                 <img src={getImageUrl(detailedProduct.image_url)} alt={detailedProduct.name} />
               ) : (
-                <div className="pd-placeholder">📦</div>
+                <Package size={48} className="pd-placeholder" />
               )}
 
               {parseFloat(detailedProduct.discount_percentage) > 0 && (
@@ -364,7 +365,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
             {detailedProduct.is_cod_allowed ? (
               <div className="pd-rewards">
                 <div className="pd-reward-item" style={{ background: '#dcfce7', color: '#16a34a', borderColor: '#bbf7d0' }}>
-                  <span>💵</span>
+                  <Banknote size={16} />
                   <span>COD Available</span>
                 </div>
               </div>
@@ -457,7 +458,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    🤖
+                    <Bot size={18} />
                   </motion.button>
                 )}
 
@@ -499,13 +500,13 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
               className={`pd-tab ${activeTab === 'description' ? 'active' : ''}`}
               onClick={() => setActiveTab('description')}
             >
-              📝 Description
+              <FileText size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Description
             </button>
             <button
               className={`pd-tab ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
-              ⭐ Reviews ({reviews.length})
+              <Star size={14} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Reviews ({reviews.length})
             </button>
             <button
               className={`pd-tab ${activeTab === 'comments' ? 'active' : ''}`}
@@ -518,14 +519,14 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                 className={`pd-tab ${activeTab === 'compare' ? 'active' : ''}`}
                 onClick={() => setActiveTab('compare')}
               >
-                🔄 Compare Similar
+                <RefreshCw size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Compare Similar
               </button>
             )}
             <button
               className={`pd-tab ${activeTab === 'category' ? 'active' : ''}`}
               onClick={() => setActiveTab('category')}
             >
-              📂 {detailedProduct.category_name || 'Category'}
+              <FolderOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{detailedProduct.category_name || 'Category'}
             </button>
           </div>
 
@@ -595,11 +596,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                       <div className="pd-compare-img">
                         {detailedProduct.image_url ? (
                           <img src={getImageUrl(detailedProduct.image_url)} alt={detailedProduct.name} />
-                        ) : <span>📦</span>}
-                      </div>
-                      <h4>{detailedProduct.name}</h4>
-                      <span className="pd-compare-price">{formatPrice(detailedProduct.current_price)}</span>
-                      <span className="pd-compare-rating">⭐ {safeFixed(detailedProduct.rating, 1)}</span>
+                        ) : <Package size={32} />}
                     </div>
 
                     {/* Similar products */}
@@ -618,12 +615,12 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                         <div className="pd-compare-img">
                           {sp.image_url ? (
                             <img src={getImageUrl(sp.image_url)} alt={sp.name} />
-                          ) : <span>📦</span>}
+                          ) : <Package size={32} />}
                         </div>
                         <h4>{sp.name}</h4>
                         <span className="pd-compare-company">{sp.company_name}</span>
                         <span className="pd-compare-price">{formatPrice(sp.current_price)}</span>
-                        <span className="pd-compare-rating">⭐ {safeFixed(sp.rating, 1)}</span>
+                        <span className="pd-compare-rating"><Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{safeFixed(sp.rating, 1)}</span>
                       </div>
                     ))}
                   </div>
@@ -635,7 +632,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
             {activeTab === 'category' && (
               <div className="pd-category-info">
                 <div className="pd-category-header">
-                  <span className="pd-category-icon">📂</span>
+                  <span className="pd-category-icon"><FolderOpen size={20} /></span>
                   <div>
                     <h4>{detailedProduct.category_name || 'Unknown Category'}</h4>
                     <p>This product belongs to the {detailedProduct.category_name || 'general'} category</p>
@@ -662,13 +659,13 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                   {Number(detailedProduct.points_reward || 0) > 0 && (
                     <div className="pd-detail-item">
                       <label>Points Reward</label>
-                      <span>⚡ {Number(detailedProduct.points_reward || 0)} pts</span>
+                      <span><Zap size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />{Number(detailedProduct.points_reward || 0)} pts</span>
                     </div>
                   )}
                   {Number(detailedProduct.stars_reward || 0) > 0 && (
                     <div className="pd-detail-item">
                       <label>Stars Reward</label>
-                      <span>⭐ {safeFixed(detailedProduct.stars_reward, 1)}</span>
+                      <span><Star size={14} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />{safeFixed(detailedProduct.stars_reward, 1)}</span>
                     </div>
                   )}
                 </div>

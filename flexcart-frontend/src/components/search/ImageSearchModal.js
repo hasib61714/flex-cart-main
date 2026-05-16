@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUpload, FiX, FiCamera, FiSearch, FiStar } from 'react-icons/fi';
+import { Target, Package } from 'lucide-react';
 import api from '../../services/api';
 import { formatPrice, getImageUrl } from '../../utils/helpers';
 import { useNavigation } from '../../context/NavigationContext';
@@ -193,7 +194,7 @@ const ImageSearchModal = ({ onClose }) => {
                     <div className="ism-results-header">
                       <span>{totalResults} similar product{totalResults !== 1 ? 's' : ''} found</span>
                       {exactMatches.length > 0 && (
-                        <span className="ism-exact-badge">🎯 {exactMatches.length} exact match{exactMatches.length !== 1 ? 'es' : ''}</span>
+                        <span className="ism-exact-badge"><Target size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{exactMatches.length} exact match{exactMatches.length !== 1 ? 'es' : ''}</span>
                       )}
                     </div>
 
@@ -211,13 +212,13 @@ const ImageSearchModal = ({ onClose }) => {
                               whileTap={{ scale: 0.98 }}
                             >
                               {product.exact_match && (
-                                <span className="ism-exact-label">🎯 Exact Match</span>
+                                <span className="ism-exact-label"><Target size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Exact Match</span>
                               )}
                               <div className="ism-product-img">
                                 {product.image_url ? (
                                   <img src={getImageUrl(product.image_url)} alt={product.name} onError={(e) => { e.target.style.display = 'none'; }} />
                                 ) : (
-                                  <div className="ism-product-img-placeholder">📦</div>
+                                  <div className="ism-product-img-placeholder"><Package size={32} /></div>
                                 )}
                               </div>
                               <div className="ism-product-info">
@@ -254,7 +255,7 @@ const ImageSearchModal = ({ onClose }) => {
                                 {product.image_url ? (
                                   <img src={getImageUrl(product.image_url)} alt={product.name} onError={(e) => { e.target.style.display = 'none'; }} />
                                 ) : (
-                                  <div className="ism-product-img-placeholder">📦</div>
+                                  <div className="ism-product-img-placeholder"><Package size={32} /></div>
                                 )}
                               </div>
                               <div className="ism-product-info">

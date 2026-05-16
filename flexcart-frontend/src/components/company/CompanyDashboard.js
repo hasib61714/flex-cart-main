@@ -10,6 +10,7 @@ import {
   FiUsers, FiShoppingCart, FiStar, FiSettings,
   FiChevronRight, FiRefreshCw, FiBriefcase, FiClock, FiXCircle, FiAlertCircle, FiSend
 } from 'react-icons/fi';
+import { Package, ShoppingCart, Star, Bell, Banknote, Target, Handshake, MessageSquare, User, Wallet } from 'lucide-react';
 import './CompanyDashboard.css';
 import { connectSocket } from '../../services/socketService';
 import api from '../../services/api';
@@ -566,12 +567,12 @@ const CompanyDashboard = ({ onRequireAuth }) => {
                           onClick={() => handleNotificationClick(notif)}
                         >
                           <span className="cd-notif-icon">
-                            {notif.type === 'new_comment' ? '💬' :
-                             notif.type === 'new_order' ? '🛒' :
-                             notif.type === 'new_review' ? '⭐' :
-                             notif.type === 'new_follower' ? '👤' :
-                             notif.type === 'product_sold' ? '💰' :
-                             notif.reference_type === 'product' ? '📦' : '📢'}
+                            {notif.type === 'new_comment' ? <MessageSquare size={14} /> :
+                             notif.type === 'new_order' ? <ShoppingCart size={14} /> :
+                             notif.type === 'new_review' ? <Star size={14} fill="currentColor" /> :
+                             notif.type === 'new_follower' ? <User size={14} /> :
+                             notif.type === 'product_sold' ? <Wallet size={14} /> :
+                             notif.reference_type === 'product' ? <Package size={14} /> : <Bell size={14} />}
                           </span>
                           <div className="cd-notif-content">
                             <p className="cd-notif-title">{notif.title}</p>
@@ -623,7 +624,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
           className={`cd-tab ${activeTab === 'negotiation' ? 'active' : ''}`}
           onClick={() => setActiveTab('negotiation')}
         >
-          🤝 Negotiation Rules
+          <Handshake size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Negotiation Rules
         </button>
       </div>
 
@@ -632,7 +633,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
         {activeTab === 'products' && (
           <div className="cd-products">
             <div className="cd-products__header">
-              <h2>📦 Products by Category</h2>
+              <h2><Package size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Products by Category</h2>
               <button
                 className="cd-add-product-btn"
                 onClick={() => setShowAddProduct(true)}
@@ -724,15 +725,15 @@ const CompanyDashboard = ({ onRequireAuth }) => {
                                   )}
                                   <div className="cd-product-card__meta">
                                     {!(product.is_in_stock === false && Number(product.stock_quantity || 0) === 0) && (
-                                      <span>📦 {product.stock_quantity || 0} qty</span>
+                                      <span><Package size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{product.stock_quantity || 0} qty</span>
                                     )}
                                     {!(product.is_in_stock === false && Number(product.total_sold || 0) === 0) && (
-                                      <span>🛒 {product.total_sold || 0} sold</span>
+                                      <span><ShoppingCart size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{product.total_sold || 0} sold</span>
                                     )}
-                                    <span>⭐ {parseFloat(product.rating || 0).toFixed(1)}</span>
+                                    <span><Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{parseFloat(product.rating || 0).toFixed(1)}</span>
                                     {product.request_count > 0 && (
                                       <span className="cd-product-requests" title="Customers waiting for restock">
-                                        🔔 {product.request_count} waiting
+                                        <Bell size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{product.request_count} waiting
                                       </span>
                                     )}
                                   </div>
@@ -774,7 +775,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
 
         {activeTab === 'orders' && (
           <div className="cd-orders">
-            <h2>🛒 Recent Orders</h2>
+            <h2><ShoppingCart size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Recent Orders</h2>
             {orderActionMsg && <p className="cd-cover-msg">{orderActionMsg}</p>}
             {!dashboardData?.recentOrders || dashboardData.recentOrders.length === 0 ? (
               <div className="cd-orders__empty">
@@ -797,7 +798,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
                       {order.payment_method === 'cash_on_delivery' && (
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
                           <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '1px 5px' }}>
-                            💵 COD
+                            <Banknote size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />COD
                           </span>
                           {order.payment_status === 'paid' ? (
                             <span style={{ fontSize: '0.72rem', background: '#dbeafe', color: '#1e40af', borderRadius: '4px', padding: '1px 5px' }}>Fully Paid</span>
@@ -930,7 +931,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
 
             {/* Promotional Banner */}
             <div className="cd-settings__cover-section">
-              <h3>🎯 Promotional Banner</h3>
+              <h3><Target size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Promotional Banner</h3>
               <p className="cd-banner-hint">Upload a flash sale or discount season banner. It will appear on your company page.</p>
               <div className="cd-settings__cover-preview">
                 {bannerPreview ? (
@@ -1079,7 +1080,7 @@ const CompanyDashboard = ({ onRequireAuth }) => {
 
         {activeTab === 'negotiation' && (
           <div className="cd-neg-rules">
-            <h2>🤝 AI Negotiation Rules</h2>
+            <h2><Handshake size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />AI Negotiation Rules</h2>
             <p className="cd-neg-rules__desc">
               Define loyalty discount tiers for customers who have previously purchased from your company.
               The AI will automatically apply the matching rule during price negotiation.

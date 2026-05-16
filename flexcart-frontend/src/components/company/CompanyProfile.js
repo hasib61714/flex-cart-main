@@ -5,6 +5,7 @@ import ProductDetail from '../home/ProductDetail';
 import api from '../../services/api';
 import companyService from '../../services/companyService';
 import { FiBell, FiBellOff, FiShare2, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import { Star, FileText, Check, UserCheck, UserPlus, PenLine, Laptop, Home, BookOpen, Car, ShoppingBag } from 'lucide-react';
 import './CompanyProfile.css';
 
 const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
@@ -109,11 +110,11 @@ const CompanyProfile = ({ companyId, onClose, onViewProduct }) => {
 
     const getCategoryIcon = (icon) => {
         const icons = {
-            laptop: '💻', shirt: '👕', home: '🏠', book: '📚',
-            dumbbell: '🏋️', sparkles: '✨', gamepad: '🎮',
-            car: '🚗', heart: '❤️', couch: '🛋️'
+            laptop: <Laptop size={24} />, shirt: <ShoppingBag size={24} />, home: <Home size={24} />, book: <BookOpen size={24} />,
+            dumbbell: <ShoppingBag size={24} />, sparkles: <ShoppingBag size={24} />, gamepad: <ShoppingBag size={24} />,
+            car: <Car size={24} />, heart: <ShoppingBag size={24} />, couch: <Home size={24} />
         };
-        return icons[icon] || '🛍️';
+        return icons[icon] || <ShoppingBag size={24} />;
     };
 
     if (loading) return <div className="company-profile-loading"><div className="spinner"></div><p>Loading company...</p></div>;
@@ -140,12 +141,12 @@ const CompanyProfile = ({ companyId, onClose, onViewProduct }) => {
                             </h1>
                             <p className="company-profile__category">{company.category || 'General'}</p>
                             <div className="company-profile__stats">
-                                <div className="stat"><span className="stat-value">⭐ {parseFloat(company.rating || 0).toFixed(1)}</span><span className="stat-label">Rating</span></div>
+                                <div className="stat"><span className="stat-value"><Star size={13} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle' }} /> {parseFloat(company.rating || 0).toFixed(1)}</span><span className="stat-label">Rating</span></div>
                                 <div className="stat"><span className="stat-value"> {Number(company.follower_count || 0)}</span><span className="stat-label">Followers</span></div>
                                 <div className="stat"><span className="stat-value"> {Number(company.totalProducts || 0)}</span><span className="stat-label">Products</span></div>
                                 <div className="stat"><span className="stat-value"> {Number(company.total_sales || 0)}</span><span className="stat-label">Sales</span></div>
                                 <div className="stat cp-stat--reviews" onClick={() => document.getElementById('company-reviews-section')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer' }}>
-                                    <span className="stat-value">📝 {Number(company.reviewCount ?? company.total_ratings ?? 0)}</span>
+                                    <span className="stat-value"><FileText size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /> {Number(company.reviewCount ?? company.total_ratings ?? 0)}</span>
                                     <span className="stat-label">Reviews</span>
                                 </div>
                             </div>
@@ -155,7 +156,7 @@ const CompanyProfile = ({ companyId, onClose, onViewProduct }) => {
                         {user && (
                             <>
                                 <button className={`company-profile__follow-btn ${company.isFollowing ? 'following' : ''}`} onClick={handleFollow}>
-                                    {company.isFollowing ? '✓ Following' : '+ Follow'}
+                                {company.isFollowing ? <><UserCheck size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Following</> : <><UserPlus size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Follow</>}
                                 </button>
                                 {company.isFollowing && (
                                     <button
@@ -175,7 +176,7 @@ const CompanyProfile = ({ companyId, onClose, onViewProduct }) => {
                                     });
                                 }} title="Share company link">
                                     <FiShare2 size={15} />
-                                    {shareCopied ? '✓ Copied!' : 'Share'}
+                                    {shareCopied ? <><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Copied!</> : 'Share'}
                                 </button>
 
                             </>
@@ -315,10 +316,10 @@ const CompanyProfile = ({ companyId, onClose, onViewProduct }) => {
             {!activeCategory && (
                 <div className="company-profile__reviews" id="company-reviews-section">
                     <div className="company-profile__reviews-header">
-                        <h2 className="section-title">⭐ Company Reviews</h2>
+                        <h2 className="section-title"><Star size={15} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Company Reviews</h2>
                         {user && (
                             <button className="company-profile__write-review-btn" onClick={() => setShowReview(true)}>
-                                ✍️ Write a Company Review
+                                <PenLine size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Write a Company Review
                             </button>
                         )}
                     </div>

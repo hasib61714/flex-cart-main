@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { FiMapPin, FiPhone, FiMail, FiGlobe, FiStar, FiPackage } from 'react-icons/fi';
+import { Package } from 'lucide-react';
 import companyService from '../../services/companyService';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { getImageUrl, formatPrice, formatDate } from '../../utils/helpers';
@@ -117,7 +118,7 @@ const CompanyDetail = ({ companyId, onClose }) => {
                     {p.image_url ? (
                       <img src={getImageUrl(p.image_url)} alt={p.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : '📦'}
+                    ) : <Package size={32} />}
                   </div>
                   <p style={{ fontSize: '0.75rem', padding: '6px', fontWeight: 500 }}>{p.name}</p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700, paddingBottom: '6px' }}>

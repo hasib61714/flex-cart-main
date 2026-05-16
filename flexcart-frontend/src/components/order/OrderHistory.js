@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiPackage, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { Package, CheckCircle2, Banknote } from 'lucide-react';
 import orderService from '../../services/orderService';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatPrice, formatDateTime, getImageUrl } from '../../utils/helpers';
@@ -57,7 +58,7 @@ const OrderHistory = () => {
 
       {orders.length === 0 ? (
         <div className="empty-state">
-          <span>📦</span>
+          <Package size={48} />
           <h3>No orders yet</h3>
           <p>Start shopping to see your order history</p>
         </div>
@@ -114,7 +115,7 @@ const OrderHistory = () => {
                         <div className="order-item-img">
                           {item.image_url ? (
                             <img src={getImageUrl(item.image_url)} alt={item.product_name} />
-                          ) : <span>📦</span>}
+                          ) : <Package size={32} />}
                         </div>
                         <div className="order-item-info">
                           <p className="order-item-name">{item.product_name}</p>
@@ -142,10 +143,10 @@ const OrderHistory = () => {
                         return (
                           <div className="order-cod-summary">
                             {advance > 0 && (
-                              <p className="order-cod-paid">✅ Advance Paid: {formatPrice(advance)}</p>
+                              <p className="order-cod-paid"><CheckCircle2 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Advance Paid: {formatPrice(advance)}</p>
                             )}
                             <p className="order-cod-due">
-                              💵 {advance > 0 ? 'Remaining Due on Delivery' : 'Total Due on Delivery'}: {formatPrice(remaining)}
+                              <Banknote size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />{advance > 0 ? 'Remaining Due on Delivery' : 'Total Due on Delivery'}: {formatPrice(remaining)}
                             </p>
                           </div>
                         );

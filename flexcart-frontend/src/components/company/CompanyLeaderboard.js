@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../../services/api';
 import { FiAward, FiTrendingUp } from 'react-icons/fi';
+import { Award, Star, Users, ShoppingCart } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import './CompanyLeaderboard.css';
 
@@ -86,7 +87,11 @@ const CompanyLeaderboard = ({ onRequireAuth }) => {
               : top.length === 2
                 ? [top[1], top[0]]
                 : [top[1], top[0], top[2]];
-            const medals = ['🥈', '🥇', '🥉'];
+            const medals = [
+              <Award size={22} style={{ color: '#94a3b8' }} />,
+              <Award size={26} style={{ color: '#f59e0b' }} />,
+              <Award size={20} style={{ color: '#cd7c2e' }} />
+            ];
             const classes = ['cl-podium-second', 'cl-podium-first', 'cl-podium-third'];
             // For 1 or 2 entries, centering overrides
             return (
@@ -105,9 +110,9 @@ const CompanyLeaderboard = ({ onRequireAuth }) => {
                       <h3>{company.company_name}</h3>
                       <span className="cl-podium-owner">by {company.owner_name}</span>
                       <div className="cl-podium-stats">
-                        <span>🛒 {company.total_sales || 0} sales</span>
-                        <span>⭐ {parseFloat(company.rating || 0).toFixed(1)} ({company.total_ratings || 0})</span>
-                        <span>👥 {company.follower_count || 0}</span>
+                        <span><ShoppingCart size={12} /> {company.total_sales || 0} sales</span>
+                        <span><Star size={12} fill="currentColor" /> {parseFloat(company.rating || 0).toFixed(1)} ({company.total_ratings || 0})</span>
+                        <span><Users size={12} /> {company.follower_count || 0}</span>
                       </div>
                     </div>
                   );
@@ -151,11 +156,11 @@ const CompanyLeaderboard = ({ onRequireAuth }) => {
                 </span>
 
                 <span className="cl-col-rating">
-                  ⭐ {parseFloat(company.rating || 0).toFixed(1)}
+                  <Star size={12} fill="currentColor" /> {parseFloat(company.rating || 0).toFixed(1)}
                 </span>
 
                 <span className="cl-col-followers">
-                  👥 {company.follower_count || 0}
+                  <Users size={12} /> {company.follower_count || 0}
                 </span>
               </div>
             ))}

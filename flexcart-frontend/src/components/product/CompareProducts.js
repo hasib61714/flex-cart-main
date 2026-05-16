@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { RefreshCw, Star, Award, Crown, Gem, X } from 'lucide-react';
 import './CompareProducts.css';
 
 // onProductSelect(id) — called when user clicks a similar product; parent handles navigation
@@ -34,16 +35,22 @@ const CompareProducts = ({ productId, onClose, onProductSelect }) => {
     };
 
     const getBadgeIcon = (badge) => {
-        const badges = { bronze: '🥉', silver: '🥈', gold: '🥇', crown: '👑', diamond: '💎' };
-        return badges[badge] || '';
+        const badges = {
+          bronze: <Award size={14} style={{ color: '#cd7c2e' }} />,
+          silver: <Award size={14} style={{ color: '#94a3b8' }} />,
+          gold: <Award size={14} style={{ color: '#f59e0b' }} />,
+          crown: <Crown size={14} style={{ color: '#f59e0b' }} />,
+          diamond: <Gem size={14} style={{ color: '#38bdf8' }} />
+        };
+        return badges[badge] || null;
     };
 
     return (
         <div className="compare-overlay" onClick={onClose}>
             <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="compare-modal__header">
-                    <h3>🔄 Similar Products</h3>
-                    <button className="compare-modal__close" onClick={onClose}>✕</button>
+                    <h3><RefreshCw size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Similar Products</h3>
+                    <button className="compare-modal__close" onClick={onClose}><X size={16} /></button>
                 </div>
                 <div className="compare-modal__content">
                     {loading ? (
@@ -80,7 +87,7 @@ const CompareProducts = ({ productId, onClose, onProductSelect }) => {
                                             )}
                                         </div>
                                         <div className="compare-product-card__rating">
-                                            <span className="stars">⭐ {product.rating?.toFixed(1) || '0.0'}</span>
+                                            <span className="stars"><Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{product.rating?.toFixed(1) || '0.0'}</span>
                                             <span className="sold">{product.total_sold || 0} sold</span>
                                         </div>
                                     </div>

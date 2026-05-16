@@ -1,7 +1,7 @@
 import React, { useState, useContext, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import { FiHeart, FiShoppingCart, FiStar, FiEye, FiZap } from 'react-icons/fi';
-import { Zap } from 'lucide-react';
+import { Zap, Package, Banknote } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import favouriteService from '../../services/favouriteService';
 import { formatPrice, getImageUrl, calculateDiscount } from '../../utils/helpers';
@@ -78,14 +78,14 @@ const ProductCard = ({ product, onAddToCart, onBuyNow, onViewDetail, onLongPress
         {product.image_url ? (
           <img src={getImageUrl(product.image_url)} alt={product.name} loading="lazy" />
         ) : (
-          <div className="product-placeholder">📦</div>
+          <Package size={48} />
         )}
 
         {/* Badges */}
         <div className="product-badges">
           {discount > 0 && <span className="badge-discount">-{discount}%</span>}
           {!product.is_in_stock && <span className="badge-out-of-stock">Out of Stock</span>}
-          {product.is_cod_allowed && product.is_in_stock && <span className="badge-cod">💵 Cash on Delivery</span>}
+          {product.is_cod_allowed && product.is_in_stock && <span className="badge-cod"><Banknote size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Cash on Delivery</span>}
         </div>
 
         {/* Quick Actions */}

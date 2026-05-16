@@ -1159,7 +1159,7 @@ const StaffAdminPanel = ({ onRequireAuth }) => {
                             <div className="sap-td-muted sap-text-xs">{o.payment_method || '—'}</div>
                             {o.payment_method === 'cash_on_delivery' && (
                               <div style={{ marginTop: '2px' }}>
-                                <span style={{ fontSize: '0.7rem', background: '#dcfce7', color: '#16a34a', borderRadius: '4px', padding: '1px 5px' }}>💵 COD</span>
+                                <span style={{ fontSize: '0.7rem', background: '#dcfce7', color: '#16a34a', borderRadius: '4px', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}><DollarSign size={10} />COD</span>
                                 {o.payment_status !== 'paid'
                                   ? (() => {
                                       const advance = Number(o.cod_advance_paid || 0);

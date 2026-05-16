@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import Modal from '../common/Modal';
 import { AuthContext } from '../../context/AuthContext';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiLogIn, FiShield, FiArrowLeft, FiCheck } from 'react-icons/fi';
+import { ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
@@ -124,7 +125,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
         <form className="auth-form" onSubmit={handleLogin}>
           <div className="auth-logo-section">
             <span className="auth-logo">FlexC</span>
-            <span className="auth-logo-cart">🛒</span>
+            <span className="auth-logo-cart"><ShoppingCart size={20} /></span>
             <p className="auth-subtitle">Sign in to your account</p>
           </div>
 

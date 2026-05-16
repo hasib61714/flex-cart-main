@@ -228,7 +228,7 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
             {isCOD && advancePaid > 0 && (
               <>
                 <div className="success-detail-item" style={{ color: '#16a34a', fontWeight: 600 }}>
-                  <span>💵 Paid Now (Advance)</span>
+                  <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Paid Now (Advance)</span>
                   <span>{formatPrice(advancePaid)}</span>
                 </div>
                 <div className="success-detail-item" style={{ color: '#92400e' }}>
@@ -429,7 +429,7 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
                   {codAdvanceTotal > 0 ? (
                     <>
                       <div className="summary-row" style={{ color: '#16a34a', fontWeight: 700, borderTop: '1px dashed #d1fae5', marginTop: '6px', paddingTop: '8px' }}>
-                        <span>💵 Pay Now to Confirm Order</span>
+                        <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pay Now to Confirm Order</span>
                         <span>৳{codAdvanceTotal.toFixed(2)}</span>
                       </div>
                       <div className="summary-row" style={{ color: '#92400e', fontWeight: 600 }}>
@@ -440,7 +440,7 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
                   ) : (
                     <>
                       <div className="summary-row" style={{ color: '#16a34a', fontWeight: 700, borderTop: '1px dashed #d1fae5', marginTop: '6px', paddingTop: '8px' }}>
-                        <span>💵 Pay Now (Delivery Charge Only)</span>
+                        <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pay Now (Delivery Charge Only)</span>
                         <span>৳{deliveryCharge.toFixed(2)}</span>
                       </div>
                       <div className="summary-row" style={{ color: '#92400e', fontWeight: 600 }}>

@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
+import { MessageSquare } from 'lucide-react';
 import './ProductComments.css';
 
 const ProductComments = ({
@@ -145,7 +146,7 @@ const ProductComments = ({
                                                 className="comment-item__reply-btn"
                                                 onClick={() => replyTo?.id === comment.id ? closeReply() : openReply(comment)}
                                             >
-                                                💬 Reply as Seller
+                                                <MessageSquare size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Reply as Seller
                                             </button>
                                         )}
                                     </div>

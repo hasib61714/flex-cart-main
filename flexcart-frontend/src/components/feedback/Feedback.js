@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiSend, FiAlertTriangle, FiClock, FiSearch, FiX, FiChevronDown } from 'react-icons/fi';
+import { Check, AlertTriangle, MessageSquare } from 'lucide-react';
 import feedbackService from '../../services/feedbackService';
 import { AuthContext } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -153,7 +154,7 @@ const Feedback = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <span className="fb-success-icon">✓</span>
+            <span className="fb-success-icon"><Check size={24} /></span>
             <div>
               <strong>{activeTab === 'complaint' ? 'Complaint submitted!' : 'Thank you for your feedback!'}</strong>
               <p>Our team will review your submission and take appropriate action.</p>
@@ -196,7 +197,7 @@ const Feedback = () => {
                   </div>
                   {selectedCompany && (
                     <div className="fb-company-selected">
-                      <span className="fb-company-selected-badge">✓ {selectedCompany.name}</span>
+                      <span className="fb-company-selected-badge"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{selectedCompany.name}</span>
                     </div>
                   )}
                   <AnimatePresence>
@@ -294,7 +295,7 @@ const Feedback = () => {
                       <li key={item.id} className="fb-history-item">
                         <div className="fb-history-item__top">
                           <span className={`fb-type-badge fb-type-badge--${item.feedback_type}`}>
-                            {item.feedback_type === 'complaint' ? '⚠ Complaint' : '💬 Feedback'}
+                            {item.feedback_type === 'complaint' ? <><AlertTriangle size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Complaint</> : <><MessageSquare size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Feedback</>}
                           </span>
                           <span
                             className="fb-status-badge"

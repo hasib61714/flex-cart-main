@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Star, Users, ShoppingCart, Check, Building2 } from 'lucide-react';
 import './CompanySwitcher.css';
 
 const CompanySwitcher = ({ companies, activeCompany, onSelect }) => {
@@ -8,7 +9,7 @@ const CompanySwitcher = ({ companies, activeCompany, onSelect }) => {
   return (
     <div className="company-switcher">
       <div className="cs-header">
-        <h2>🏢 Select Company Dashboard</h2>
+        <h2><Building2 size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Select Company Dashboard</h2>
         <p>Choose a company to manage</p>
       </div>
 
@@ -35,13 +36,13 @@ const CompanySwitcher = ({ companies, activeCompany, onSelect }) => {
               <h3>{company.company_name}</h3>
               <span className="cs-category">{company.category || 'General'}</span>
               <div className="cs-card__stats">
-                <span>⭐ {parseFloat(company.rating || 0).toFixed(1)}</span>
-                <span>👥 {company.follower_count || 0}</span>
-                <span>🛒 {company.total_sales || 0}</span>
+                <span><Star size={12} fill="currentColor" /> {parseFloat(company.rating || 0).toFixed(1)}</span>
+                <span><Users size={12} /> {company.follower_count || 0}</span>
+                <span><ShoppingCart size={12} /> {company.total_sales || 0}</span>
               </div>
             </div>
             {activeCompany?.id === company.id && (
-              <div className="cs-active-badge">✓ Active</div>
+              <div className="cs-active-badge"><Check size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />Active</div>
             )}
           </motion.div>
         ))}

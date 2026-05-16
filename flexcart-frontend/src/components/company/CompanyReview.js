@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
+import { Star } from 'lucide-react';
 import './CompanyReview.css';
 
 const CompanyReview = ({ companyId, companyName, onClose, onReviewSubmitted }) => {
@@ -50,10 +51,10 @@ const CompanyReview = ({ companyId, companyName, onClose, onReviewSubmitted }) =
                 <div className="company-review-modal__body">
                     <p className="review-type-note">
                         This review is for the <strong>company</strong>, not a specific product.
-                        Your ⭐ stars will be spent on submission.
+                        Your <Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle' }} /> stars will be spent on submission.
                     </p>
                     <p className="review-info">
-                        Available stars: <strong>⭐ {parseFloat(user?.stars || 0).toFixed(2)}</strong>
+                        Available stars: <strong><Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle' }} /> {parseFloat(user?.stars || 0).toFixed(2)}</strong>
                     </p>
                     <div className="company-review-modal__stars">
                         {[1, 2, 3, 4, 5].map(star => (
@@ -83,7 +84,7 @@ const CompanyReview = ({ companyId, companyName, onClose, onReviewSubmitted }) =
                         onClick={handleSubmit}
                         disabled={!rating || submitting}
                     >
-                        {submitting ? 'Submitting...' : `Submit Company Review (Spend ${rating || 0} ⭐)`}
+                        {submitting ? 'Submitting...' : <>Submit Company Review (Spend {rating || 0} <Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle' }} />)</>}
                     </button>
                 </div>
             </div>

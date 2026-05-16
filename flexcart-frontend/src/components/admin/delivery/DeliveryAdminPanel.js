@@ -4,7 +4,7 @@ import {
   DollarSign, User, Clock, History, CheckCircle, LogOut,
   X, Bell, GitBranch, Route, Send,
   Phone, ChevronDown, Sun, Moon, Calendar, TrendingUp,
-  XCircle, Activity, Lock, Eye, EyeOff
+  XCircle, Activity, Lock, Eye, EyeOff, Banknote
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import deliveryService from '../../../services/deliveryService';
@@ -95,7 +95,7 @@ function OrderInfoCard({ item }) {
       {isCOD && (
         <div className="dap-oi-row">
           <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '1px 6px' }}>
-            💵 COD
+            <Banknote size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />COD
           </span>
           {item.payment_status !== 'paid' && item.order_total != null && (
             <span style={{ fontSize: '0.72rem', color: '#92400e', marginLeft: '4px' }}>

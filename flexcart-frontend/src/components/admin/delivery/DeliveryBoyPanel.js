@@ -3,7 +3,8 @@ import {
   Truck, CheckCircle, Clock, Camera, MapPin, Package, User, Phone,
   ArrowRight, RefreshCw, LogIn, History, X, AlertCircle, Box,
   ChevronRight, Navigation, Image, XCircle, BarChart2,
-  LogOut, AlertTriangle, Calendar, Sun, Moon, Filter, Lock, Eye, EyeOff
+  LogOut, AlertTriangle, Calendar, Sun, Moon, Filter, Lock, Eye, EyeOff,
+  Banknote, CheckCircle2, Wallet
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import deliveryService from '../../../services/deliveryService';
@@ -538,17 +539,17 @@ const DeliveryBoyPanel = ({ onRequireAuth }) => {
                   return (
                     <>
                       <div className="dbp-detail-row dbp-detail-row--highlight">
-                        <span style={{ fontSize: '1rem' }}>💵</span><span>Payment</span>
+                        <Banknote size={16} /><span>Payment</span>
                         <strong style={{ color: '#10b981' }}>Cash on Delivery</strong>
                       </div>
                       {advance > 0 && (
                         <div className="dbp-detail-row">
-                          <span style={{ fontSize: '1rem' }}>✅</span><span>Advance Paid</span>
+                          <CheckCircle2 size={16} /><span>Advance Paid</span>
                           <strong style={{ color: '#10b981' }}>৳{advance.toFixed(2)}</strong>
                         </div>
                       )}
                       <div className="dbp-detail-row">
-                        <span style={{ fontSize: '1rem' }}>💰</span>
+                        <Wallet size={16} />
                         <span>{advance > 0 ? 'Collect on Delivery' : 'Total to Collect'}</span>
                         <strong style={{ color: '#f59e0b', fontSize: '1.05rem' }}>৳{remaining.toFixed(2)}</strong>
                       </div>
