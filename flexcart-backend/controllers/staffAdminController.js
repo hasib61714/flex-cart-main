@@ -892,17 +892,17 @@ const staffAdminController = {
   getAnalytics: async (req, res) => {
     try {
       const { period = 'monthly' } = req.query;
-      let dateFormat = '%Y-%m';
-      if (period === 'daily')  dateFormat = '%Y-%m-%d';
-      if (period === 'yearly') dateFormat = '%Y';
+      let dateFormat = 'YYYY-MM';
+      if (period === 'daily')  dateFormat = 'YYYY-MM-DD';
+      if (period === 'yearly') dateFormat = 'YYYY';
 
       const [revenueData] = await pool.query(
-        `SELECT DATE_FORMAT(created_at, ?) as label, SUM(total_amount) as revenue, COUNT(*) as orders
+        `SELECT TO_CHAR(created_at, ?) as label, SUM(total_amount) as revenue, COUNT(*) as orders
          FROM orders WHERE payment_status='paid' GROUP BY label ORDER BY label DESC LIMIT 12`,
         [dateFormat]
       );
       const [deliveryData] = await pool.query(
-        `SELECT DATE_FORMAT(assigned_at, ?) as label, COUNT(*) as total,
+        `SELECT TO_CHAR(assigned_at, ?) as label, COUNT(*) as total,
                 SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as completed,
                 SUM(total_cost) as delivery_revenue
          FROM deliveries GROUP BY label ORDER BY label DESC LIMIT 12`,

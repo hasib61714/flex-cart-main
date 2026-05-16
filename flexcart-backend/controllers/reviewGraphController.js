@@ -8,9 +8,9 @@ const reviewGraphController = {
       const targetYear = parseInt(year) || new Date().getFullYear();
 
       const [dailyData] = await pool.query(
-        `SELECT DAY(o.created_at) as day, DATE(o.created_at) as date, SUM(o.total_amount) as total_spent, COUNT(o.id) as order_count
-        FROM orders o WHERE o.user_id = ? AND MONTH(o.created_at) = ? AND YEAR(o.created_at) = ? AND o.payment_status = 'paid'
-        GROUP BY DAY(o.created_at), DATE(o.created_at) ORDER BY day ASC`,
+        `SELECT EXTRACT(DAY FROM o.created_at)::int AS day, o.created_at::date AS date, SUM(o.total_amount) AS total_spent, COUNT(o.id) AS order_count
+        FROM orders o WHERE o.user_id = ? AND EXTRACT(MONTH FROM o.created_at) = ? AND EXTRACT(YEAR FROM o.created_at) = ? AND o.payment_status = 'paid'
+        GROUP BY EXTRACT(DAY FROM o.created_at)::int, o.created_at::date ORDER BY day ASC`,
         [req.user.id, targetMonth, targetYear]
       );
 

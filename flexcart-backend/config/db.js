@@ -569,6 +569,15 @@ const { Pool } = require('pg');
           CONSTRAINT unique_revenue_order UNIQUE (order_id)
         )`,
 
+        // Ensure unique constraint exists even if table was created by old startup-migration.js
+        `DO $$ BEGIN
+           IF NOT EXISTS (
+             SELECT 1 FROM pg_constraint WHERE conname = 'unique_revenue_order'
+           ) THEN
+             ALTER TABLE revenue_history ADD CONSTRAINT unique_revenue_order UNIQUE (order_id);
+           END IF;
+         END $$`,
+
         `CREATE TABLE IF NOT EXISTS category_commissions (
           id SERIAL PRIMARY KEY,
           category_id INT NOT NULL,

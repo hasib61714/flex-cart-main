@@ -61,7 +61,7 @@ async function recordRevenueHistory(conn, {
        (order_id, order_number, sale_date, product_total, discount_amount, delivery_charge,
         commission_rate, commission_amount, delivery_revenue, source_type)
      VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (order_id) DO NOTHING`,
+     ON CONFLICT DO NOTHING`,
     [orderId, orderNumber, productTotal, discountAmount, deliveryCharge,
      commissionRate, commissionAmount, deliveryCharge, sourceType]
   );
