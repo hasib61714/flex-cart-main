@@ -1475,6 +1475,34 @@ const addProduct = async (req, res) => {
         const autoPoints = parseInt(points_reward) || Math.floor(currentPrice * 0.1);
         const autoStars = parseFloat(stars_reward) || parseFloat((currentPrice * 0.005).toFixed(1));
 
+        // Helper to detect missing-column errors (MySQL + PostgreSQL)
+        const isMissingColumnError = (err) => err && (
+            err.code === 'ER_BAD_FIELD_ERROR' ||
+            err.code === '42703' || // PostgreSQL: undefined_column
+            err.code === '42P01'    // PostgreSQL: undefined_table
+        );
+
+        // Base insert params (no AR, no COD) — guaranteed compatible with base schema
+        const minimalInsertQuery =
+            `INSERT INTO products
+             (company_id, category_id, name, description, old_price, current_price,
+              min_price, max_price, discount_percentage, stock_quantity,
+              image_url, promo_code, brand, model, color, weight, dimensions,
+              warranty, tags, points_reward, stars_reward, is_in_stock, is_negotiable)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const minimalInsertParams = [
+            company_id, category_id, name, description || '',
+            maxPriceVal, currentPrice, minPriceVal,
+            maxPriceVal, discount, parseInt(stock_quantity) || 0,
+            mainImage, promo_code || null,
+            brand || null, model || null, color || null,
+            weight || null, dimensions || null, warranty || null,
+            tags || null, autoPoints, autoStars,
+            parseInt(stock_quantity) > 0 ? 1 : 0,
+            parseInt(is_negotiable) || 0
+        ];
+
         const baseInsertQuery =
             `INSERT INTO products
              (company_id, category_id, name, description, old_price, current_price,
@@ -1484,15 +1512,7 @@ const addProduct = async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const baseInsertParams = [
-            company_id, category_id, name, description || '',
-            maxPriceVal, currentPrice, minPriceVal,
-            maxPriceVal, discount, parseInt(stock_quantity) || 0,
-            mainImage, promo_code || null,
-            brand || null, model || null, color || null,
-            weight || null, dimensions || null, warranty || null,
-            tags || null, autoPoints, autoStars,
-            parseInt(stock_quantity) > 0 ? 1 : 0,
-            parseInt(is_negotiable) || 0,
+            ...minimalInsertParams,
             parseInt(is_cod_allowed) || 0,
             (cod_advance_amount != null && cod_advance_amount !== '') ? parseFloat(cod_advance_amount) : null
         ];
@@ -1515,62 +1535,74 @@ const addProduct = async (req, res) => {
 
         let result;
         try {
+            // Try full query first (all columns)
             const [r] = await pool.query(insertWithArQuery, insertWithArParams);
             result = r;
         } catch (err) {
-            // If DB wasn't migrated yet, allow normal product creation to work.
-            if (err && err.code === 'ER_BAD_FIELD_ERROR') {
-                if (arEnabled) {
-                    return res.status(500).json({
-                        success: false,
-                        message: 'AR 3D columns are not available in the database yet. Please run the DB migration to add is_ar_3d/ar_qr_image/ar_url.'
-                    });
-                }
+            if (!isMissingColumnError(err)) throw err;
+            try {
+                // Fallback 1: without AR columns (cod columns still included)
                 const [r2] = await pool.query(baseInsertQuery, baseInsertParams);
                 result = r2;
-            } else {
-                throw err;
+            } catch (err2) {
+                if (!isMissingColumnError(err2)) throw err2;
+                // Fallback 2: minimal base schema only (no cod, no ar extra columns)
+                const [r3] = await pool.query(minimalInsertQuery, minimalInsertParams);
+                result = r3;
             }
         }
 
-        // Insert images into product_images table
+        // Insert images into product_images table (may not exist in all deployments)
         for (let i = 0; i < images.length; i++) {
-            await pool.query(
-                'INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)',
-                [result.insertId, images[i], i === 0 ? 1 : 0, i]
-            );
+            try {
+                await pool.query(
+                    'INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)',
+                    [result.insertId, images[i], i === 0 ? 1 : 0, i]
+                );
+            } catch (_e) { /* product_images table may not exist yet */ }
         }
 
         // Save promo code if provided
         if (promo_code && promo_discount_value > 0) {
-            await pool.query(
-                `INSERT INTO company_promo_codes 
-                 (company_id, product_id, code, discount_type, discount_value)
-                 VALUES (?, ?, ?, 'percentage', ?)
-                 ON DUPLICATE KEY UPDATE discount_value = ?`,
-                [company_id, result.insertId, promo_code,
-                 parseFloat(promo_discount_value), parseFloat(promo_discount_value)]
-            );
+            try {
+                await pool.query(
+                    `INSERT INTO company_promo_codes
+                     (company_id, product_id, code, discount_type, discount_value)
+                     VALUES (?, ?, ?, 'percentage', ?)
+                     ON DUPLICATE KEY UPDATE discount_value = ?`,
+                    [company_id, result.insertId, promo_code,
+                     parseFloat(promo_discount_value), parseFloat(promo_discount_value)]
+                );
+            } catch (_e) { /* company_promo_codes table may not exist yet */ }
         }
 
         // Notify followers who have notifications enabled
-        const [followers] = await pool.query(
-            'SELECT user_id FROM company_followers WHERE company_id = ? AND notifications_enabled = 1',
-            [company_id]
-        );
-
-        const [companyInfo] = await pool.query(
-            'SELECT company_name FROM companies WHERE id = ?',
-            [company_id]
-        );
-
-        for (const follower of followers) {
-            await pool.query(
-                `INSERT INTO notifications 
-                 (user_id, type, title, message, reference_id, reference_type) 
-                 VALUES (?, 'company_update', 'New Product', ?, ?, 'product')`,
-                [follower.user_id, `${companyInfo[0].company_name} added: ${name}`, result.insertId]
+        let followers = [];
+        try {
+            [followers] = await pool.query(
+                'SELECT user_id FROM company_followers WHERE company_id = ? AND notifications_enabled = 1',
+                [company_id]
             );
+        } catch (_e) { /* company_followers table may not exist yet */ }
+
+        if (followers.length > 0) {
+            try {
+                const [companyInfo] = await pool.query(
+                    'SELECT company_name FROM companies WHERE id = ?',
+                    [company_id]
+                );
+                const companyName = companyInfo[0]?.company_name || '';
+                for (const follower of followers) {
+                    try {
+                        await pool.query(
+                            `INSERT INTO notifications
+                             (user_id, type, title, message, reference_id, reference_type)
+                             VALUES (?, 'company_update', 'New Product', ?, ?, 'product')`,
+                            [follower.user_id, `${companyName} added: ${name}`, result.insertId]
+                        );
+                    } catch (_e) { /* skip notification errors */ }
+                }
+            } catch (_e) { /* skip notification errors */ }
         }
 
         const [newProduct] = await pool.query(

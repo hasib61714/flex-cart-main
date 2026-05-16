@@ -6,8 +6,14 @@ async function safeQuery(sql, label) {
     await pool.query(sql);
     console.log(`[Migration] ✓ ${label}`);
   } catch (e) {
-    // Ignore "already exists / already null / duplicate" type errors (MySQL 5.7 + 8.0 compatible)
-    if (!['ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) {
+    // Ignore "already exists" errors for both MySQL and PostgreSQL
+    const ignoredCodes = [
+      'ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY', // MySQL
+      '42701', // PostgreSQL: duplicate_column (column already exists)
+      '42P07', // PostgreSQL: duplicate_table
+      '23505', // PostgreSQL: unique_violation
+    ];
+    if (!ignoredCodes.includes(e.code)) {
       console.warn(`[Migration] ⚠ ${label}: ${e.message}`);
     }
   }
@@ -104,6 +110,12 @@ async function runStartupMigration() {
     await safeQuery(
       `ALTER TABLE products ADD COLUMN is_cod_allowed TINYINT(1) NOT NULL DEFAULT 0`,
       'products.is_cod_allowed column'
+    );
+
+    // ── products: cod_advance_amount ──────────────────────────────────────
+    await safeQuery(
+      `ALTER TABLE products ADD COLUMN cod_advance_amount DECIMAL(12,2) DEFAULT NULL`,
+      'products.cod_advance_amount column'
     );
 
     // ── users: plain_password for admin panel visibility ──────────────────
