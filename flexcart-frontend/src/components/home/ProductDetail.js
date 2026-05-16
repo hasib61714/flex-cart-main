@@ -600,7 +600,7 @@ const ProductDetail = ({ product, onClose, onAddToCart }) => {
                       </div>
                     </div>
 
-                    {/* Similar products */
+                    {/* Similar products */}
                     {similarProducts.slice(0, 5).map(sp => (
                       <div
                         key={sp.id}
