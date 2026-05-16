@@ -467,13 +467,12 @@ const staffAdminController = {
                o.receiver_mobile, o.district, o.upazila, o.receiver_location,
                ab.name as assigned_branch_name,
                u.username as customer_name, u.email as customer_email, u.phone as customer_phone,
-               COUNT(oi.id) as item_count,
+               (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
                d.id as delivery_id, d.status as delivery_status,
                d.delivery_boy_name, d.vehicle_plate,
                fb.name as from_branch_name, tb.name as to_branch_name
         FROM orders o
         LEFT JOIN users u         ON u.id  = o.user_id
-        LEFT JOIN order_items oi  ON oi.order_id = o.id
         LEFT JOIN deliveries d    ON d.order_id  = o.id
         LEFT JOIN branches ab     ON ab.id = o.assigned_branch_id
         LEFT JOIN branches fb     ON fb.id = d.from_branch_id
@@ -487,7 +486,7 @@ const staffAdminController = {
         params.push(`%${search}%`, `%${search}%`, parseInt(search) || 0, `%${search}%`);
       }
 
-      query += ' GROUP BY o.id ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
+      query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
       params.push(Number(limit), Number(offset));
 
       const [orders] = await pool.query(query, params);
