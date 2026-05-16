@@ -766,7 +766,7 @@ const staffAdminController = {
         SELECT l.*, u.username as admin_username, u.email as admin_email, u.role as admin_role_name
         FROM admin_audit_log l
         JOIN users u ON u.id = l.admin_user_id
-        WHERE l.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`;
+        WHERE l.created_at >= NOW() - (? * INTERVAL '1 day')`;
       const params = [Number(days)];
 
       if (action)  { query += ' AND l.action = ?';         params.push(action); }
@@ -778,7 +778,7 @@ const staffAdminController = {
       const [logs] = await pool.query(query, params);
 
       const [[{ total }]] = await pool.query(
-        'SELECT COUNT(*) as total FROM admin_audit_log WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+        "SELECT COUNT(*) as total FROM admin_audit_log WHERE created_at >= NOW() - (? * INTERVAL '1 day')",
         [Number(days)]
       );
 
