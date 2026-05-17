@@ -532,13 +532,27 @@ const { Pool } = require('pg');
         `CREATE TABLE IF NOT EXISTS password_reset_otps (
           id SERIAL PRIMARY KEY,
           user_id INT NOT NULL,
-          email VARCHAR(255) NOT NULL,
-          otp CHAR(6) NOT NULL,
+          email VARCHAR(255) NOT NULL DEFAULT '',
+          otp CHAR(6) NOT NULL DEFAULT '',
+          otp_code CHAR(6) DEFAULT NULL,
           expires_at TIMESTAMP NOT NULL,
           used SMALLINT NOT NULL DEFAULT 0,
+          is_used SMALLINT NOT NULL DEFAULT 0,
+          is_verified SMALLINT NOT NULL DEFAULT 0,
+          reset_token VARCHAR(256) DEFAULT NULL,
+          token_expires_at TIMESTAMP DEFAULT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`,
+
+        // Migrate existing password_reset_otps rows to new column names
+        `ALTER TABLE password_reset_otps ADD COLUMN IF NOT EXISTS otp_code CHAR(6) DEFAULT NULL`,
+        `ALTER TABLE password_reset_otps ADD COLUMN IF NOT EXISTS is_used SMALLINT NOT NULL DEFAULT 0`,
+        `ALTER TABLE password_reset_otps ADD COLUMN IF NOT EXISTS is_verified SMALLINT NOT NULL DEFAULT 0`,
+        `ALTER TABLE password_reset_otps ADD COLUMN IF NOT EXISTS reset_token VARCHAR(256) DEFAULT NULL`,
+        `ALTER TABLE password_reset_otps ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMP DEFAULT NULL`,
+        `UPDATE password_reset_otps SET otp_code = otp WHERE otp_code IS NULL AND otp <> ''`,
+        `UPDATE password_reset_otps SET is_used = used WHERE is_used = 0 AND used = 1`,
 
         // ── migration_v5_delivery_status ──────────────────────────────────────
         `ALTER TABLE orders ADD COLUMN IF NOT EXISTS previous_branch_id INT NULL DEFAULT NULL`,
@@ -662,7 +676,7 @@ const { Pool } = require('pg');
     }
   };
 
-module.exports = { pool, testConnection };
+module.exports = { pool, testConnection, convertSQL };
 
 // ──────────────────────────────────────────────────────────────────────────
 // (MySQL branch removed — Supabase PostgreSQL only)

@@ -58,7 +58,7 @@ const paymentSuccess = async (req, res) => {
       await pool.query(
         `INSERT INTO ssl_transactions (order_id, tran_id, val_id, amount, currency, status, raw_response)
          VALUES (?, ?, ?, ?, ?, 'success', ?)
-         ON DUPLICATE KEY UPDATE val_id = VALUES(val_id), status = 'success', updated_at = NOW()`,
+         ON CONFLICT (tran_id) DO UPDATE SET val_id = EXCLUDED.val_id, status = 'success', updated_at = NOW()`,
         [order.id, tran_id, val_id, parseFloat(amount), currency || 'BDT', JSON.stringify(req.body)]
       );
     }
@@ -81,7 +81,7 @@ const paymentFail = async (req, res) => {
       pool.query(
         `INSERT INTO ssl_transactions (order_id, tran_id, val_id, amount, currency, status, raw_response)
          SELECT id, ?, '', 0, 'BDT', 'failed', ? FROM orders WHERE ssl_tran_id = ? LIMIT 1
-         ON DUPLICATE KEY UPDATE status = 'failed', updated_at = NOW()`,
+         ON CONFLICT (tran_id) DO UPDATE SET status = 'failed', updated_at = NOW()`,
         [tran_id, JSON.stringify(req.body), tran_id]
       ).catch(() => {});
     }
@@ -139,7 +139,7 @@ const paymentIPN = async (req, res) => {
       await pool.query(
         `INSERT INTO ssl_transactions (order_id, tran_id, val_id, amount, currency, status, raw_response)
          VALUES (?, ?, ?, ?, ?, 'success', ?)
-         ON DUPLICATE KEY UPDATE val_id = VALUES(val_id), status = 'success', updated_at = NOW()`,
+         ON CONFLICT (tran_id) DO UPDATE SET val_id = EXCLUDED.val_id, status = 'success', updated_at = NOW()`,
         [order.id, tran_id, val_id, parseFloat(amount), currency || 'BDT', JSON.stringify(req.body)]
       );
     }

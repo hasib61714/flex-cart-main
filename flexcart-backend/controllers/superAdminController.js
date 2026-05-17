@@ -460,14 +460,14 @@ const superAdminController = {
       // Auto-create table if migration hasn't been run yet
       await pool.query(`
         CREATE TABLE IF NOT EXISTS category_commissions (
-          id INT AUTO_INCREMENT PRIMARY KEY,
+          id SERIAL PRIMARY KEY,
           category_id INT NOT NULL,
           category_name VARCHAR(100) NOT NULL DEFAULT '',
           commission_rate DECIMAL(5,2) NOT NULL DEFAULT 5.00,
           updated_by_user_id INT DEFAULT NULL,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          UNIQUE KEY uq_category (category_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT uq_category_commission UNIQUE (category_id)
+        )
       `);
 
       // Resolve category name if not provided

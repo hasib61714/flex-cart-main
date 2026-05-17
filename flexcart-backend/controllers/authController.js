@@ -256,6 +256,13 @@ const authController = {
       if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid password' });
       if (user.id === req.user.id) return res.status(400).json({ success: false, message: 'Cannot link to same account' });
 
+      // Prevent linking between admin accounts and regular user accounts (privilege escalation guard)
+      const isCurrentUserAdmin = ADMIN_ROLES.includes(req.user.role);
+      const isTargetUserAdmin = ADMIN_ROLES.includes(user.role);
+      if (isCurrentUserAdmin !== isTargetUserAdmin) {
+        return res.status(403).json({ success: false, message: 'Cannot link admin and non-admin accounts' });
+      }
+
       await pool.query('INSERT INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?) ON CONFLICT DO NOTHING', [req.user.id, user.id]);
       await pool.query('INSERT INTO linked_accounts (primary_user_id, linked_user_id) VALUES (?, ?) ON CONFLICT DO NOTHING', [user.id, req.user.id]);
 
@@ -291,119 +298,6 @@ const authController = {
       res.json({ success: true, message: 'Switched account successfully', data: { user: users[0], ...tokens } });
     } catch (error) {
       console.error('Switch Account Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  },
-
-  forgotPassword: async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
-
-      const normalizedEmail = email.toLowerCase().trim();
-      const [users] = await pool.query(
-        'SELECT id, email, username FROM users WHERE email = ?',
-        [normalizedEmail]
-      );
-
-      // Always respond success to prevent email enumeration
-      if (users.length === 0) {
-        return res.json({ success: true, message: 'If that email is registered, an OTP has been sent.' });
-      }
-
-      const user = users[0];
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-      await pool.query(
-        'UPDATE password_reset_otps SET used = 1 WHERE email = ? AND used = 0',
-        [normalizedEmail]
-      );
-      await pool.query(
-        'INSERT INTO password_reset_otps (user_id, email, otp, expires_at) VALUES (?, ?, ?, ?)',
-        [user.id, normalizedEmail, otp, expiresAt]
-      );
-
-      const { sendOtpEmail } = require('../services/emailService');
-      await sendOtpEmail(user.email, otp, user.username);
-
-      res.json({ success: true, message: 'If that email is registered, an OTP has been sent.' });
-    } catch (error) {
-      console.error('Forgot Password Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  },
-
-  verifyOtp: async (req, res) => {
-    try {
-      const { email, otp } = req.body;
-      if (!email || !otp) {
-        return res.status(400).json({ success: false, message: 'Email and OTP are required' });
-      }
-
-      const [rows] = await pool.query(
-        `SELECT * FROM password_reset_otps
-         WHERE email = ? AND otp = ? AND used = 0 AND expires_at > NOW()
-         ORDER BY created_at DESC LIMIT 1`,
-        [email.toLowerCase().trim(), String(otp).trim()]
-      );
-
-      if (rows.length === 0) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
-      }
-
-      await pool.query('UPDATE password_reset_otps SET used = 1 WHERE id = ?', [rows[0].id]);
-
-      const resetToken = jwt.sign(
-        { userId: rows[0].user_id, purpose: 'password_reset' },
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' }
-      );
-
-      res.json({ success: true, message: 'OTP verified', data: { reset_token: resetToken } });
-    } catch (error) {
-      console.error('Verify OTP Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  },
-
-  resetPassword: async (req, res) => {
-    try {
-      const { reset_token, new_password } = req.body;
-      if (!reset_token || !new_password) {
-        return res.status(400).json({ success: false, message: 'Reset token and new password are required' });
-      }
-      if (new_password.length < 6) {
-        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-      }
-
-      let decoded;
-      try {
-        decoded = jwt.verify(reset_token, process.env.JWT_SECRET);
-      } catch {
-        return res.status(400).json({ success: false, message: 'Invalid or expired reset link. Please start over.' });
-      }
-
-      if (decoded.purpose !== 'password_reset') {
-        return res.status(400).json({ success: false, message: 'Invalid token' });
-      }
-
-      const [users] = await pool.query('SELECT id, role FROM users WHERE id = ?', [decoded.userId]);
-      if (users.length === 0) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-      }
-
-      const hash = await bcrypt.hash(new_password, 12);
-      const ADMIN_ROLES = ['staff_admin', 'delivery_admin', 'delivery_boy', 'super_admin'];
-
-      await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, decoded.userId]);
-
-      // Invalidate all active sessions so old tokens can't be reused
-      await pool.query('UPDATE user_sessions SET is_active = 0 WHERE user_id = ?', [decoded.userId]);
-
-      res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
-    } catch (error) {
-      console.error('Reset Password Error:', error);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   },
@@ -456,7 +350,7 @@ const authController = {
       if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
       const [users] = await pool.query(
-        "SELECT id, email, role FROM users WHERE email = ? AND status = 'active'",
+        "SELECT id, email, username, role FROM users WHERE email = ? AND status = 'active'",
         [email.toLowerCase().trim()]
       );
 
@@ -474,12 +368,12 @@ const authController = {
             [user.id]
           );
           await pool.query(
-            'INSERT INTO password_reset_otps (user_id, otp_code, expires_at) VALUES (?, ?, ?)',
-            [user.id, otp, expiresAt]
+            'INSERT INTO password_reset_otps (user_id, email, otp_code, expires_at) VALUES (?, ?, ?, ?)',
+            [user.id, user.email, otp, expiresAt]
           );
 
           try {
-            await sendOtpEmail(user.email, otp);
+            await sendOtpEmail(user.email, otp, user.username);
           } catch (emailErr) {
             console.error('OTP email send error:', emailErr.message);
           }

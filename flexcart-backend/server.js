@@ -99,7 +99,12 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-// Serve uploaded files
+// Serve uploaded files - block access to sensitive document folders
+const { authenticateToken } = require('./middleware/auth');
+const sensitiveUploads = ['/uploads/nids', '/uploads/faces'];
+sensitiveUploads.forEach(p => {
+  app.use(p, authenticateToken, express.static(path.join(__dirname, p.slice(1))));
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes

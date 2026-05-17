@@ -1,9 +1,15 @@
-const { pool } = require('../config/db');
+const { pool, convertSQL } = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 async function safeQuery(sql, label) {
   try {
-    await pool.query(sql);
+    // Convert MySQL-flavoured SQL to PostgreSQL before executing.
+    // convertSQL handles: AUTO_INCREMENT→SERIAL, TINYINT→SMALLINT, ENUM→VARCHAR,
+    // ENGINE=InnoDB stripped, ON UPDATE CURRENT_TIMESTAMP stripped,
+    // UNIQUE KEY → CONSTRAINT UNIQUE, INDEX declarations removed,
+    // ON DUPLICATE KEY UPDATE → ON CONFLICT DO NOTHING, MODIFY COLUMN ENUM → ALTER COLUMN TYPE.
+    const pgSql = convertSQL(sql);
+    await pool.query(pgSql);
     console.log(`[Migration] ✓ ${label}`);
   } catch (e) {
     // Ignore "already exists" errors for both MySQL and PostgreSQL
@@ -12,6 +18,7 @@ async function safeQuery(sql, label) {
       '42701', // PostgreSQL: duplicate_column (column already exists)
       '42P07', // PostgreSQL: duplicate_table
       '23505', // PostgreSQL: unique_violation
+      '42P16', // PostgreSQL: invalid_table_definition (e.g. duplicate constraint)
     ];
     if (!ignoredCodes.includes(e.code)) {
       console.warn(`[Migration] ⚠ ${label}: ${e.message}`);
@@ -41,9 +48,9 @@ async function runStartupMigration() {
          ('delivery_inside_dhaka',   '60.00',  'Base delivery charge inside Dhaka (BDT)'),
          ('delivery_outside_dhaka',  '120.00', 'Base delivery charge outside Dhaka (BDT)'),
          ('delivery_extra_per_item', '30.00',  'Additional charge per extra item beyond the first (BDT)')
-       ON DUPLICATE KEY UPDATE
-         setting_value = VALUES(setting_value),
-         description   = VALUES(description)`,
+       ON CONFLICT (setting_key) DO UPDATE SET
+         setting_value = EXCLUDED.setting_value,
+         description   = EXCLUDED.description`,
       'platform_settings: delivery zone keys upserted'
     );
 

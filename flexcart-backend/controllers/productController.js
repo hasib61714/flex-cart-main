@@ -180,19 +180,27 @@ const ensureUserInteractionTable = async () => {
 
     await pool.query(
         `CREATE TABLE IF NOT EXISTS user_product_interactions (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             user_id INT NOT NULL,
-            interaction_type ENUM('view', 'search') NOT NULL,
+            interaction_type VARCHAR(20) NOT NULL CHECK (interaction_type IN ('view', 'search')),
             product_id INT DEFAULT NULL,
             search_query VARCHAR(255) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
-            INDEX idx_user_type_created (user_id, interaction_type, created_at),
-            INDEX idx_user_created (user_id, created_at),
-            INDEX idx_product (product_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+        )`
     );
+
+    // Create indexes separately (PostgreSQL does not support inline INDEX in CREATE TABLE)
+    await pool.query(
+        `CREATE INDEX IF NOT EXISTS idx_upi_user_type_created ON user_product_interactions(user_id, interaction_type, created_at)`
+    ).catch(() => {});
+    await pool.query(
+        `CREATE INDEX IF NOT EXISTS idx_upi_user_created ON user_product_interactions(user_id, created_at)`
+    ).catch(() => {});
+    await pool.query(
+        `CREATE INDEX IF NOT EXISTS idx_upi_product ON user_product_interactions(product_id)`
+    ).catch(() => {});
 
     userInteractionTableReady = true;
 };
