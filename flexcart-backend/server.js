@@ -40,7 +40,14 @@ const PORT = process.env.PORT || 5000;
 
 // Security Middleware
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    frameguard: { action: 'sameorigin' },
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            'frame-ancestors': ["'self'"]
+        }
+    }
 }));
 
 // Gzip compression — reduces API response sizes significantly
