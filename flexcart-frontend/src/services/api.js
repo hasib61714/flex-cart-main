@@ -1,12 +1,17 @@
 import axios from 'axios';
 
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+// Wake up Render free-tier backend on app load (it sleeps after 15 min inactivity)
+axios.get(`${BASE_URL}/health`, { timeout: 60000 }).catch(() => {});
 
 // Request interceptor — attach token
 api.interceptors.request.use(
@@ -29,13 +34,23 @@ const redirectToAdminLogin = () => {
   }
 };
 
-// Response interceptor — token refresh + global 401 handling
+// Response interceptor — token refresh + global 401 handling + network retry
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
     const code   = error.response?.data?.code;
+
+    // Retry network errors (e.g. Render cold-start drops the connection)
+    if (!error.response && !originalRequest._networkRetry) {
+      originalRequest._networkRetry = true;
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      if (originalRequest._retryCount <= 3) {
+        await new Promise(res => setTimeout(res, 3000 * originalRequest._retryCount));
+        return api(originalRequest);
+      }
+    }
 
     // Attempt silent token refresh on TOKEN_EXPIRED
     if (status === 401 && code === 'TOKEN_EXPIRED' && !originalRequest._retry) {
