@@ -113,7 +113,7 @@ const PaymentResultPage = () => {
         </h1>
         <p style={styles.subtitle}>
           {isSuccess
-            ? 'Your payment was confirmed and your order is being processed.'
+            ? 'Your advance payment was confirmed. Your order is now active and will be delivered to you. Remaining balance is due on delivery.'
             : reasonLabel}
         </p>
 

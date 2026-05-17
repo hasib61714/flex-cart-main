@@ -34,7 +34,7 @@ const paymentSuccess = async (req, res) => {
 
     // Find order by ssl_tran_id
     const [rows] = await pool.query(
-      'SELECT id, order_number, payment_status FROM orders WHERE ssl_tran_id = ? LIMIT 1',
+      'SELECT id, order_number, payment_status, payment_method FROM orders WHERE ssl_tran_id = ? LIMIT 1',
       [tran_id]
     );
 
@@ -44,12 +44,14 @@ const paymentSuccess = async (req, res) => {
 
     const order = rows[0];
 
-    // Idempotent — skip update if already paid
-    if (order.payment_status !== 'paid') {
+    // Idempotent — skip update if already paid or advance already recorded
+    if (order.payment_status !== 'paid' && order.payment_status !== 'cod_advance_paid') {
+      // COD orders: advance paid online; rest collected on delivery
+      const newStatus = order.payment_method === 'cash_on_delivery' ? 'cod_advance_paid' : 'paid';
       await pool.query(
-        `UPDATE orders SET payment_status = 'paid', ssl_val_id = ?, updated_at = NOW()
+        `UPDATE orders SET payment_status = ?, ssl_val_id = ?, updated_at = NOW()
          WHERE id = ? AND payment_status = 'pending'`,
-        [val_id, order.id]
+        [newStatus, val_id, order.id]
       );
 
       // Log in ssl_transactions for audit trail
@@ -119,18 +121,19 @@ const paymentIPN = async (req, res) => {
     if (!isValid) return;
 
     const [rows] = await pool.query(
-      'SELECT id, payment_status FROM orders WHERE ssl_tran_id = ? LIMIT 1',
+      'SELECT id, payment_status, payment_method FROM orders WHERE ssl_tran_id = ? LIMIT 1',
       [tran_id]
     );
 
     if (!rows.length) return;
     const order = rows[0];
 
-    if (order.payment_status !== 'paid') {
+    if (order.payment_status !== 'paid' && order.payment_status !== 'cod_advance_paid') {
+      const newStatus = order.payment_method === 'cash_on_delivery' ? 'cod_advance_paid' : 'paid';
       await pool.query(
-        `UPDATE orders SET payment_status = 'paid', ssl_val_id = ?, updated_at = NOW()
+        `UPDATE orders SET payment_status = ?, ssl_val_id = ?, updated_at = NOW()
          WHERE id = ? AND payment_status = 'pending'`,
-        [val_id, order.id]
+        [newStatus, val_id, order.id]
       );
 
       await pool.query(

@@ -271,7 +271,9 @@ const orderController = {
         : null;
 
       const isPendingPayment = payment_method === 'cash_on_delivery' || payment_method === 'sslcommerz';
-      const sslTranId = payment_method === 'sslcommerz'
+      const needsSSL = payment_method === 'sslcommerz' ||
+        (payment_method === 'cash_on_delivery' && codAdvancePaid > 0);
+      const sslTranId = needsSSL
         ? `FLEX-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
         : null;
 
@@ -379,7 +381,12 @@ const orderController = {
       await connection.commit();
 
       // --- SSLCommerz: initiate payment after committing the order ---
-      if (payment_method === 'sslcommerz') {
+      if (needsSSL) {
+        // For COD+advance: charge only the advance; for sslcommerz: charge full order
+        const sslAmount    = payment_method === 'cash_on_delivery' ? codAdvancePaid : finalAmount;
+        const sslLabel     = payment_method === 'cash_on_delivery'
+          ? `COD Advance - FlexCart #${orderNumber}`
+          : `FlexCart Order #${orderNumber}`;
         try {
           const [userRows] = await pool.query(
             'SELECT username, email, phone FROM users WHERE id = ? LIMIT 1',
@@ -388,13 +395,13 @@ const orderController = {
           const user = userRows[0] || {};
           const gatewayUrl = await initiateSSL({
             tranId:          sslTranId,
-            totalAmount:     finalAmount,
+            totalAmount:     sslAmount,
             customerName:    user.username || 'Customer',
             customerEmail:   user.email    || 'customer@flexcart.com',
             customerPhone:   receiver_mobile?.trim() || user.phone || '01700000000',
             shippingAddress: shipping_address || district || 'Dhaka',
             shippingCity:    shipping_city    || district || 'Dhaka',
-            productName:     `FlexCart Order #${orderNumber}`,
+            productName:     sslLabel,
           });
           return res.status(201).json({
             success: true,
@@ -410,7 +417,10 @@ const orderController = {
               pointsEarned: totalPointsEarned,
               starsEarned: totalStarsEarned,
               paymentMethod: payment_method,
-              codAdvancePaid: 0,
+              codAdvancePaid: codAdvancePaid || 0,
+              codDueOnDelivery: payment_method === 'cash_on_delivery'
+                ? Math.max(0, finalAmount - (codAdvancePaid || 0))
+                : 0,
               gatewayUrl,
               selectedRoute: {
                 id: routeSelection.routeId,
@@ -423,7 +433,6 @@ const orderController = {
           });
         } catch (sslError) {
           console.error('SSLCommerz initiation error:', sslError.message);
-          // Order is committed; return orderId so frontend can handle it
           return res.status(201).json({
             success: true,
             message: 'Order created but payment gateway initiation failed. Please retry.',
@@ -580,7 +589,9 @@ const orderController = {
         : null;
 
       const isPendingBuyNow = payment_method === 'cash_on_delivery' || payment_method === 'sslcommerz';
-      const sslTranIdBuyNow = payment_method === 'sslcommerz'
+      const needsSSLBuyNow = payment_method === 'sslcommerz' ||
+        (payment_method === 'cash_on_delivery' && codAdvancePaid > 0);
+      const sslTranIdBuyNow = needsSSLBuyNow
         ? `FLEX-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
         : null;
 
@@ -675,7 +686,11 @@ const orderController = {
       await connection.commit();
 
       // --- SSLCommerz: initiate payment after committing the buy-now order ---
-      if (payment_method === 'sslcommerz') {
+      if (needsSSLBuyNow) {
+        const sslAmount = payment_method === 'cash_on_delivery' ? codAdvancePaid : totalAmount;
+        const sslLabel  = payment_method === 'cash_on_delivery'
+          ? `COD Advance - FlexCart #${orderNumber}`
+          : `FlexCart Order #${orderNumber}`;
         try {
           const [userRows] = await pool.query(
             'SELECT username, email, phone FROM users WHERE id = ? LIMIT 1',
@@ -684,13 +699,13 @@ const orderController = {
           const user = userRows[0] || {};
           const gatewayUrl = await initiateSSL({
             tranId:          sslTranIdBuyNow,
-            totalAmount:     totalAmount,
+            totalAmount:     sslAmount,
             customerName:    user.username || 'Customer',
             customerEmail:   user.email    || 'customer@flexcart.com',
             customerPhone:   receiver_mobile?.trim() || user.phone || '01700000000',
             shippingAddress: shipping_address || district || 'Dhaka',
             shippingCity:    shipping_city    || district || 'Dhaka',
-            productName:     `FlexCart Order #${orderNumber}`,
+            productName:     sslLabel,
           });
           return res.status(201).json({
             success: true,
@@ -699,7 +714,10 @@ const orderController = {
               orderId, orderNumber, subtotal, deliveryCharge, totalAmount,
               pointsEarned, starsEarned,
               paymentMethod: payment_method,
-              codAdvancePaid: 0,
+              codAdvancePaid: codAdvancePaid || 0,
+              codDueOnDelivery: payment_method === 'cash_on_delivery'
+                ? Math.max(0, totalAmount - (codAdvancePaid || 0))
+                : 0,
               gatewayUrl,
               selectedRoute: {
                 id: routeSelection.routeId,
@@ -733,6 +751,9 @@ const orderController = {
           starsEarned,
           paymentMethod: payment_method,
           codAdvancePaid: codAdvancePaid || 0,
+          codDueOnDelivery: payment_method === 'cash_on_delivery' && codAdvancePaid
+            ? Math.max(0, totalAmount - codAdvancePaid)
+            : 0,
           selectedRoute: {
             id: routeSelection.routeId,
             matchType: routeSelection.matchType,

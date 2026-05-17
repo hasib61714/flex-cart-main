@@ -203,9 +203,11 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
   if (orderComplete && orderResult) {
     const isCOD = orderResult.paymentMethod === 'cash_on_delivery';
     const advancePaid = parseFloat(orderResult.codAdvancePaid || 0);
-    const remainingDue = isCOD
-      ? Math.max(0, parseFloat(orderResult.totalAmount) - advancePaid)
-      : 0;
+    const dueOnDelivery = parseFloat(
+      orderResult.codDueOnDelivery != null
+        ? orderResult.codDueOnDelivery
+        : Math.max(0, parseFloat(orderResult.totalAmount) - advancePaid)
+    );
 
     return (
       <Modal isOpen={true} onClose={onSuccess} title="Order Confirmed! 🎉" size="small">
@@ -234,19 +236,19 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
             {isCOD && advancePaid > 0 && (
               <>
                 <div className="success-detail-item" style={{ color: '#16a34a', fontWeight: 600 }}>
-                  <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Paid Now (Advance)</span>
+                  <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Advance Paid (Online)</span>
                   <span>{formatPrice(advancePaid)}</span>
                 </div>
                 <div className="success-detail-item" style={{ color: '#92400e' }}>
                   <span>Due on Delivery</span>
-                  <span>{formatPrice(remainingDue)}</span>
+                  <span>{formatPrice(dueOnDelivery)}</span>
                 </div>
               </>
             )}
             {isCOD && advancePaid === 0 && (
               <div className="success-detail-item" style={{ color: '#92400e' }}>
                 <span>Pay on Delivery</span>
-                <span>{formatPrice(orderResult.totalAmount)}</span>
+                <span>{formatPrice(parseFloat(orderResult.totalAmount))}</span>
               </div>
             )}
             <div className="success-detail-item">
@@ -346,8 +348,8 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
             <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#dcfce7', borderRadius: '8px', border: '1px solid #bbf7d0', fontSize: '0.875rem', color: '#166534' }}>
               <Banknote size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
               {codAdvanceTotal > 0
-                ? <><strong>Cash on Delivery:</strong> Pay <strong>৳{codAdvanceTotal.toFixed(2)}</strong> now to confirm your order. The remaining balance will be paid to the delivery person on receipt.</>
-                : <><strong>Cash on Delivery:</strong> Pay only the delivery charge now. All products will be paid to the delivery person on receipt.</>
+                ? <><strong>Cash on Delivery:</strong> Pay <strong>৳{codAdvanceTotal.toFixed(2)}</strong> advance now via online payment to confirm your order. The remaining <strong>৳{Math.max(0, (baseTotal + deliveryCharge) - codAdvanceTotal).toFixed(2)}</strong> will be paid to the delivery person on receipt.</>
+                : <><strong>Cash on Delivery:</strong> No advance required. Pay the full amount to the delivery person when your order arrives.</>
               }
             </div>
           )}
@@ -435,7 +437,7 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
                   {codAdvanceTotal > 0 ? (
                     <>
                       <div className="summary-row" style={{ color: '#16a34a', fontWeight: 700, borderTop: '1px dashed #d1fae5', marginTop: '6px', paddingTop: '8px' }}>
-                        <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pay Now to Confirm Order</span>
+                        <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pay Now (Advance to Confirm)</span>
                         <span>৳{codAdvanceTotal.toFixed(2)}</span>
                       </div>
                       <div className="summary-row" style={{ color: '#92400e', fontWeight: 600 }}>
@@ -444,16 +446,10 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div className="summary-row" style={{ color: '#16a34a', fontWeight: 700, borderTop: '1px dashed #d1fae5', marginTop: '6px', paddingTop: '8px' }}>
-                        <span><Banknote size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pay Now (Delivery Charge Only)</span>
-                        <span>৳{deliveryCharge.toFixed(2)}</span>
-                      </div>
-                      <div className="summary-row" style={{ color: '#92400e', fontWeight: 600 }}>
-                        <span>Total Due on Delivery</span>
-                        <span>৳{productTotal.toFixed(2)}</span>
-                      </div>
-                    </>
+                    <div className="summary-row" style={{ color: '#92400e', fontWeight: 600, borderTop: '1px dashed #fed7aa', marginTop: '6px', paddingTop: '8px' }}>
+                      <span>Pay on Delivery (no advance required)</span>
+                      <span>৳{finalTotal.toFixed(2)}</span>
+                    </div>
                   )}
                 </>
               ) : (
@@ -478,8 +474,10 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
             const productTotal = Math.max(baseTotal - promoDiscount - (pointsNum / 100), 0);
             const finalTotal = productTotal + deliveryCharge;
             if (paymentMethod === 'cash_on_delivery') {
-              const advPay = codAdvanceTotal > 0 ? codAdvanceTotal : deliveryCharge;
-              return loading ? 'Processing...' : `Confirm COD — Pay ৳${advPay.toFixed(2)} Now`;
+              if (codAdvanceTotal > 0) {
+                return loading ? 'Processing...' : `Confirm COD — Pay Advance ৳${codAdvanceTotal.toFixed(2)}`;
+              }
+              return loading ? 'Processing...' : 'Confirm COD Order (Pay on Delivery)';
             }
             return loading ? 'Processing...' : `Pay ${formatPrice(finalTotal)}`;
           })()}
