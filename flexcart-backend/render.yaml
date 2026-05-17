@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: .
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node --max-old-space-size=460 server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

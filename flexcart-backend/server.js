@@ -52,7 +52,8 @@ app.use(helmet({
 }));
 
 // Gzip compression — reduces API response sizes significantly
-app.use(compression());
+// level 6 = good balance of speed vs size; threshold: skip tiny responses
+app.use(compression({ level: 6, threshold: 1024 }));
 
 // CORS
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
@@ -105,7 +106,11 @@ const sensitiveUploads = ['/uploads/nids', '/uploads/faces'];
 sensitiveUploads.forEach(p => {
   app.use(p, authenticateToken, express.static(path.join(__dirname, p.slice(1))));
 });
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '7d',
+  etag: true,
+  lastModified: true
+}));
 
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -189,6 +194,10 @@ app.use((err, req, res, next) => {
         message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
     });
 });
+// Tune HTTP keep-alive so connections are reused properly on Render
+server.keepAliveTimeout = 65000;
+server.headersTimeout   = 66000;
+
 // Start Server — listen immediately so health checks pass, then init DB
 const startServer = async () => {
     initRealtimeGateway(server);
@@ -197,6 +206,22 @@ const startServer = async () => {
         console.log(`📋 API Documentation: http://localhost:${PORT}/api/health`);
         console.log(`🔌 Realtime Gateway: enabled`);
         console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+
+        // Self-ping every 14 min to prevent Render free-tier sleep
+        // Render resets the 15-min idle timer on every incoming request,
+        // so this keeps the server warm as long as it is already running.
+        if (process.env.NODE_ENV !== 'development') {
+            const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+            if (selfUrl) {
+                const pingClient = selfUrl.startsWith('https') ? require('https') : require('http');
+                setInterval(() => {
+                    pingClient.get(`${selfUrl}/api/health`, (res) => {
+                        res.resume(); // drain & discard
+                    }).on('error', () => {}); // silent fail — server may be busy
+                }, 14 * 60 * 1000);
+                console.log(`🏓 Keep-alive ping enabled → ${selfUrl}/api/health`);
+            }
+        }
     });
     // DB init runs after server is up (non-blocking for health check)
     testConnection().then(() => runStartupMigration()).catch(err => {

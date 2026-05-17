@@ -4,7 +4,7 @@
   "description": "FlexCart E-Commerce Backend API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --max-old-space-size=460 server.js",
     "dev": "nodemon server.js",
     "vs:start": "..\\.venv\\Scripts\\python.exe ai\\visual_search.py",
     "rec:start": "..\\.venv\\Scripts\\python.exe ai\\recommender_service.py",

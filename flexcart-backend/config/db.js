@@ -14,9 +14,11 @@ const { Pool } = require('pg');
   const pgPool = new Pool({
     connectionString: dbUrl,
     ssl: needsSsl ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
+    max: 10,
+    min: 2,
+    idleTimeoutMillis: 20000,
     connectionTimeoutMillis: 15000,
+    keepAlive: true,
   });
 
   // ── MySQL SQL → PostgreSQL SQL converter ────────────────────────────────────
