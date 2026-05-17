@@ -9,6 +9,7 @@ import { NavigationProvider } from './context/NavigationContext';
 import MainLayout from './components/layout/MainLayout';
 import AdminLoginPage from './components/admin/AdminLoginPage';
 import Toast from './components/common/Toast';
+import MaintenancePage from './components/common/MaintenancePage';
 import './App.css';
 
 // Lazy-load heavy admin portal to keep the main bundle lean
@@ -52,6 +53,11 @@ const AdminGuard = ({ children }) => {
 };
 
 function App() {
+    // ── Maintenance mode — set REACT_APP_MAINTENANCE=true in Vercel env vars ──
+    if (process.env.REACT_APP_MAINTENANCE === 'true') {
+      return <MaintenancePage />;
+    }
+
     const pathname = window.location.pathname;
     const portal = new URLSearchParams(window.location.search).get('portal');
 
