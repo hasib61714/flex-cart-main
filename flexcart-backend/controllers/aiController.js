@@ -41,7 +41,11 @@ const aiController = {
   processImage: async (req, res) => {
     try {
       const { description } = req.body;
+      // req.file.filename = local disk filename; req.file.path = Cloudinary URL or absolute disk path
       const imagePath = req.file ? req.file.filename : '';
+      const imageStoredPath = req.file
+        ? (/^https?:\/\//i.test(req.file.path) ? req.file.path : `/uploads/ai/${req.file.filename}`)
+        : null;
       if (!req.file && !description) return res.status(400).json({ success: false, message: 'Please upload an image or provide a description' });
 
       const results = await processImageForProducts(imagePath, description || '');
@@ -49,7 +53,7 @@ const aiController = {
       if (req.user) {
         await pool.query(
           `INSERT INTO ai_search_history (user_id, image_path, description, results) VALUES (?, ?, ?, ?)`,
-          [req.user.id, imagePath ? `/uploads/ai/${imagePath}` : null, description || null, JSON.stringify({ inStock: results.inStock.length, outOfStock: results.outOfStock.length })]
+          [req.user.id, imageStoredPath, description || null, JSON.stringify({ inStock: results.inStock.length, outOfStock: results.outOfStock.length })]
         );
       }
 

@@ -97,14 +97,14 @@ const authController = {
         });
       }
 
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-      if (!isMatch) {
+      // Block admin accounts from the user-facing login endpoint BEFORE doing bcrypt (timing safety)
+      if (ADMIN_ROLES.includes(user.role)) {
         return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
-      // Block admin accounts from the user-facing login endpoint
-      if (ADMIN_ROLES.includes(user.role)) {
-        return res.status(401).json({ success: false, message: 'Invalid user credentials' });
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
       const tokens = generateTokens(user.id);
@@ -114,7 +114,8 @@ const authController = {
         [user.id, tokens.refreshToken, req.headers['user-agent'] || 'unknown']
       );
 
-      const { password_hash, ...userData } = user;
+      // Strip sensitive fields before sending to client
+      const { password_hash, plain_password, ...userData } = user;
 
       res.json({ success: true, message: 'Login successful', data: { user: userData, ...tokens } });
     } catch (error) {
@@ -168,7 +169,7 @@ const authController = {
         [user.id, tokens.refreshToken, req.headers['user-agent'] || 'unknown']
       );
 
-      const { password_hash, ...userData } = user;
+      const { password_hash, plain_password, ...userData } = user;
 
       res.json({ success: true, message: 'Login successful', data: { user: userData, ...tokens } });
     } catch (error) {
@@ -211,7 +212,17 @@ const authController = {
       const token = authHeader && authHeader.split(' ')[1];
       if (token) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        await pool.query('UPDATE user_sessions SET is_active = 0 WHERE user_id = ?', [decoded.userId]);
+        // Only invalidate the current device session, not all sessions
+        const refreshToken = req.body?.refreshToken;
+        if (refreshToken) {
+          await pool.query(
+            'UPDATE user_sessions SET is_active = 0 WHERE user_id = ? AND token = ?',
+            [decoded.userId, refreshToken]
+          );
+        } else {
+          // Fallback: invalidate all sessions for this user if no refresh token provided
+          await pool.query('UPDATE user_sessions SET is_active = 0 WHERE user_id = ?', [decoded.userId]);
+        }
       }
       res.json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
@@ -273,6 +284,10 @@ const authController = {
       if (users.length === 0) return res.status(404).json({ success: false, message: 'Account not found' });
 
       const tokens = generateTokens(accountId);
+      await pool.query(
+        'INSERT INTO user_sessions (user_id, token, device_info) VALUES (?, ?, ?)',
+        [accountId, tokens.refreshToken, req.headers['user-agent'] || 'unknown']
+      );
       res.json({ success: true, message: 'Switched account successfully', data: { user: users[0], ...tokens } });
     } catch (error) {
       console.error('Switch Account Error:', error);
@@ -381,14 +396,7 @@ const authController = {
       const hash = await bcrypt.hash(new_password, 12);
       const ADMIN_ROLES = ['staff_admin', 'delivery_admin', 'delivery_boy', 'super_admin'];
 
-      if (ADMIN_ROLES.includes(users[0].role)) {
-        await pool.query(
-          'UPDATE users SET password_hash = ?, plain_password = ? WHERE id = ?',
-          [hash, new_password, decoded.userId]
-        );
-      } else {
-        await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, decoded.userId]);
-      }
+      await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, decoded.userId]);
 
       // Invalidate all active sessions so old tokens can't be reused
       await pool.query('UPDATE user_sessions SET is_active = 0 WHERE user_id = ?', [decoded.userId]);
@@ -563,14 +571,7 @@ const authController = {
       const { id: recordId, user_id, role } = records[0];
       const hash = await bcrypt.hash(new_password, 12);
 
-      if (ADMIN_ROLES.includes(role)) {
-        await pool.query(
-          'UPDATE users SET password_hash = ?, plain_password = ? WHERE id = ?',
-          [hash, new_password, user_id]
-        );
-      } else {
-        await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user_id]);
-      }
+      await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user_id]);
 
       await pool.query('UPDATE password_reset_otps SET is_used = 1 WHERE id = ?', [recordId]);
       await pool.query('UPDATE user_sessions SET is_active = 0 WHERE user_id = ?', [user_id]);

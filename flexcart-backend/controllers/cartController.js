@@ -82,6 +82,9 @@ const cartController = {
       }
 
       const negPrice = negotiated_price ? parseFloat(negotiated_price) : null;
+      if (negPrice !== null && (isNaN(negPrice) || negPrice <= 0 || negPrice > parseFloat(products[0].current_price))) {
+        return res.status(400).json({ success: false, message: 'Negotiated price must be a positive number not exceeding the listed price' });
+      }
 
       await pool.query(
         `INSERT INTO cart (user_id, product_id, quantity, negotiated_price) VALUES (?, ?, ?, ?)
@@ -105,16 +108,16 @@ const cartController = {
       if (!Number.isInteger(qty) || qty < 0 || qty > 999) {
         return res.status(400).json({ success: false, message: 'Quantity must be an integer between 0 and 999' });
       }
-      if (quantity <= 0) { await pool.query('DELETE FROM cart WHERE id = ? AND user_id = ?', [id, req.user.id]); return res.json({ success: true, message: 'Item removed' }); }
+      if (qty <= 0) { await pool.query('DELETE FROM cart WHERE id = ? AND user_id = ?', [id, req.user.id]); return res.json({ success: true, message: 'Item removed' }); }
       // Enforce stock limit
       const [rows] = await pool.query(
         `SELECT p.stock_quantity FROM cart c JOIN products p ON c.product_id = p.id WHERE c.id = ? AND c.user_id = ?`,
         [id, req.user.id]
       );
-      if (rows.length > 0 && quantity > rows[0].stock_quantity) {
+      if (rows.length > 0 && qty > rows[0].stock_quantity) {
         return res.status(400).json({ success: false, message: `Only ${rows[0].stock_quantity} in stock` });
       }
-      await pool.query('UPDATE cart SET quantity = ?, updated_at = NOW() WHERE id = ? AND user_id = ?', [quantity, id, req.user.id]);
+      await pool.query('UPDATE cart SET quantity = ?, updated_at = NOW() WHERE id = ? AND user_id = ?', [qty, id, req.user.id]);
       res.json({ success: true, message: 'Cart updated' });
     } catch (error) {
       console.error('Update Cart Error:', error);

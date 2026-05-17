@@ -89,7 +89,11 @@ const settingsController = {
   updateBackground: async (req, res) => {
     try {
       const { background_image } = req.body;
-      await pool.query('UPDATE users SET background_image = ? WHERE id = ?', [background_image, req.user.id]);
+      // Reject javascript:/data: URLs and other unsafe schemes
+      if (background_image && !/^https?:\/\//i.test(background_image)) {
+        return res.status(400).json({ success: false, message: 'Background image must be a valid http/https URL' });
+      }
+      await pool.query('UPDATE users SET background_image = ? WHERE id = ?', [background_image || null, req.user.id]);
       res.json({ success: true, message: 'Background updated' });
     } catch (error) {
       console.error('Update Background Error:', error);
@@ -132,15 +136,7 @@ const settingsController = {
 
       const hash = await bcrypt.hash(new_password, 12);
 
-      const ADMIN_ROLES = ['super_admin', 'staff_admin', 'delivery_admin', 'delivery_boy'];
-      if (ADMIN_ROLES.includes(users[0].role)) {
-        await pool.query(
-          'UPDATE users SET password_hash = ?, plain_password = ? WHERE id = ?',
-          [hash, new_password, req.user.id]
-        );
-      } else {
-        await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
-      }
+      await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
 
       res.json({ success: true, message: 'Password updated successfully' });
     } catch (error) {

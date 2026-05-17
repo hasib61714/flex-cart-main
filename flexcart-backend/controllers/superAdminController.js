@@ -626,7 +626,7 @@ const superAdminController = {
       const { search, role } = req.query;
       let query = `
         SELECT u.id, u.username, u.email, u.phone, u.role, u.salary,
-               u.status, u.created_at, u.plain_password, b.name AS branch_name
+               u.status, u.created_at, b.name AS branch_name
         FROM users u
         LEFT JOIN branches b ON b.id = u.assigned_branch_id
         WHERE u.role IN ('staff_admin','delivery_admin','delivery_boy')`;
@@ -651,7 +651,7 @@ const superAdminController = {
           const { search, role } = req.query;
           let fbQuery = `
             SELECT u.id, u.username, u.email, u.phone, u.role, u.salary,
-                   u.status, u.created_at, NULL AS plain_password, b.name AS branch_name
+                   u.status, u.created_at, b.name AS branch_name
             FROM users u
             LEFT JOIN branches b ON b.id = u.assigned_branch_id
             WHERE u.role IN ('staff_admin','delivery_admin','delivery_boy')`;
