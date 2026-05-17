@@ -372,6 +372,16 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
   };
 
   const handleStatClick = (filter) => {
+    // Pending orders → branch assignment queue tab (not yet accepted)
+    if (filter === 'pending-orders') {
+      setActiveTab('queue');
+      return;
+    }
+    // Accepted orders → accepted assignments tab (accepted, awaiting delivery boy)
+    if (filter === 'accepted-orders') {
+      setActiveTab('accepted');
+      return;
+    }
     if (statFilter === filter) {
       setStatFilter(null);
       setFilteredItems([]);

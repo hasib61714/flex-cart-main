@@ -188,6 +188,218 @@ async function runStartupMigration() {
       'ssl_transactions table'
     );
 
+    // ══════════════════════════════════════════════════════════════════════
+    // DELIVERY SYSTEM MIGRATIONS (migration_admin_panels + v4 + v5 + v6)
+    // All idempotent — safe to re-run on every startup via safeQuery()
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ── orders: branch assignment flow ────────────────────────────────────
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN assigned_branch_id INT DEFAULT NULL`,
+      'orders.assigned_branch_id'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN assigned_branch_at TIMESTAMP NULL DEFAULT NULL`,
+      'orders.assigned_branch_at'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN branch_accepted_at TIMESTAMP NULL DEFAULT NULL`,
+      'orders.branch_accepted_at'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN branch_accepted_by_user_id INT DEFAULT NULL`,
+      'orders.branch_accepted_by_user_id'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN previous_branch_id INT NULL DEFAULT NULL`,
+      'orders.previous_branch_id'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN current_status VARCHAR(50) NOT NULL DEFAULT 'order_placed'`,
+      'orders.current_status'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN from_location VARCHAR(255) DEFAULT NULL`,
+      'orders.from_location'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN to_location VARCHAR(255) DEFAULT NULL`,
+      'orders.to_location'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN route_id INT DEFAULT NULL`,
+      'orders.route_id'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN cod_advance_paid DECIMAL(12,2) DEFAULT 0.00`,
+      'orders.cod_advance_paid'
+    );
+
+    // ── users: delivery worker columns ────────────────────────────────────
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN assigned_branch_id INT DEFAULT NULL`,
+      'users.assigned_branch_id'
+    );
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN is_approved TINYINT(1) DEFAULT 1`,
+      'users.is_approved'
+    );
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN salary DECIMAL(12,2) DEFAULT 0.00`,
+      'users.salary'
+    );
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN delivery_is_available TINYINT(1) DEFAULT 1`,
+      'users.delivery_is_available'
+    );
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN delivery_last_location VARCHAR(500) DEFAULT NULL`,
+      'users.delivery_last_location'
+    );
+    await safeQuery(
+      `ALTER TABLE users ADD COLUMN delivery_last_location_updated_at TIMESTAMP NULL DEFAULT NULL`,
+      'users.delivery_last_location_updated_at'
+    );
+
+    // ── branches: activation flag ─────────────────────────────────────────
+    await safeQuery(
+      `ALTER TABLE branches ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1`,
+      'branches.is_active'
+    );
+
+    // ── deliveries: extend columns and status ENUM ────────────────────────
+    await safeQuery(
+      `ALTER TABLE deliveries ADD COLUMN packaging_category ENUM('plastic','glass','fragile','standard') DEFAULT 'standard'`,
+      'deliveries.packaging_category'
+    );
+    await safeQuery(
+      `ALTER TABLE deliveries ADD COLUMN packaging_cost DECIMAL(10,2) NOT NULL DEFAULT 1.00`,
+      'deliveries.packaging_cost'
+    );
+    await safeQuery(
+      `ALTER TABLE deliveries ADD COLUMN delivery_boy_user_id INT DEFAULT NULL`,
+      'deliveries.delivery_boy_user_id'
+    );
+    await safeQuery(
+      `ALTER TABLE deliveries ADD COLUMN destination_address TEXT DEFAULT NULL`,
+      'deliveries.destination_address'
+    );
+    await safeQuery(
+      `ALTER TABLE deliveries ADD COLUMN rejection_reason TEXT NULL DEFAULT NULL`,
+      'deliveries.rejection_reason'
+    );
+    await safeQuery(
+      `ALTER TABLE deliveries MODIFY COLUMN status ENUM('assigned','in_transit','out_for_delivery','delivered','rejected','returned') DEFAULT 'assigned'`,
+      'deliveries.status ENUM extended'
+    );
+
+    // ── vehicles table ────────────────────────────────────────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS vehicles (
+         id                   INT AUTO_INCREMENT PRIMARY KEY,
+         plate_number         VARCHAR(60)  NOT NULL,
+         vehicle_type         VARCHAR(60)  DEFAULT 'bike',
+         branch_id            INT          DEFAULT NULL,
+         route_from_branch_id INT          DEFAULT NULL,
+         route_to_branch_id   INT          DEFAULT NULL,
+         route_via_branches   JSON         DEFAULT NULL,
+         driver_name          VARCHAR(100) DEFAULT NULL,
+         driver_phone         VARCHAR(30)  DEFAULT NULL,
+         route_id             INT          DEFAULT NULL,
+         assigned_user_id     INT          DEFAULT NULL,
+         is_active            TINYINT(1)   DEFAULT 1,
+         created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         updated_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+         UNIQUE KEY uq_plate (plate_number),
+         INDEX idx_vehicle_branch (branch_id)
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'vehicles table'
+    );
+    // Add extra columns in case table existed before these columns
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN route_from_branch_id INT DEFAULT NULL`, 'vehicles.route_from_branch_id');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN route_to_branch_id INT DEFAULT NULL`, 'vehicles.route_to_branch_id');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN route_via_branches JSON DEFAULT NULL`, 'vehicles.route_via_branches');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN driver_name VARCHAR(100) DEFAULT NULL`, 'vehicles.driver_name');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN driver_phone VARCHAR(30) DEFAULT NULL`, 'vehicles.driver_phone');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN route_id INT DEFAULT NULL`, 'vehicles.route_id');
+    await safeQuery(`ALTER TABLE vehicles ADD COLUMN assigned_user_id INT DEFAULT NULL`, 'vehicles.assigned_user_id');
+
+    // ── order_tracking table (append-only delivery timeline) ──────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS order_tracking (
+         id              INT AUTO_INCREMENT PRIMARY KEY,
+         order_id        INT          NOT NULL,
+         location        VARCHAR(500) DEFAULT NULL,
+         status          VARCHAR(50)  NOT NULL,
+         updated_by      INT          DEFAULT NULL,
+         event_timestamp TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         INDEX idx_tracking_order_time (order_id, event_timestamp),
+         FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'order_tracking table'
+    );
+
+    // ── delivery_hubs table ───────────────────────────────────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS delivery_hubs (
+         id         INT AUTO_INCREMENT PRIMARY KEY,
+         name       VARCHAR(255) NOT NULL,
+         location   VARCHAR(500) NOT NULL,
+         is_active  TINYINT(1)   DEFAULT 1,
+         created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'delivery_hubs table'
+    );
+
+    // ── delivery_routes table ─────────────────────────────────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS delivery_routes (
+         id            INT AUTO_INCREMENT PRIMARY KEY,
+         from_location VARCHAR(255) NOT NULL,
+         to_location   VARCHAR(255) NOT NULL,
+         is_active     TINYINT(1)   DEFAULT 1,
+         created_by    INT          DEFAULT NULL,
+         created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'delivery_routes table'
+    );
+
+    // ── delivery_route_hubs junction table ────────────────────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS delivery_route_hubs (
+         id         INT AUTO_INCREMENT PRIMARY KEY,
+         route_id   INT       NOT NULL,
+         hub_id     INT       NOT NULL,
+         hub_order  INT       NOT NULL DEFAULT 1,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         INDEX idx_drh_route (route_id),
+         FOREIGN KEY (route_id) REFERENCES delivery_routes(id) ON DELETE CASCADE,
+         FOREIGN KEY (hub_id)   REFERENCES delivery_hubs(id)   ON DELETE RESTRICT
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'delivery_route_hubs table'
+    );
+
+    // ── branch_delivery_pricing table (per-route charges) ─────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS branch_delivery_pricing (
+         id                              INT AUTO_INCREMENT PRIMARY KEY,
+         from_branch_id                  INT            NOT NULL,
+         to_branch_id                    INT            NOT NULL,
+         charge_branch_to_branch         DECIMAL(10,2)  NOT NULL DEFAULT 2.00,
+         charge_branch_to_branch_address DECIMAL(10,2)  NOT NULL DEFAULT 2.50,
+         currency                        VARCHAR(10)    NOT NULL DEFAULT 'BDT',
+         is_active                       TINYINT(1)     DEFAULT 1,
+         created_at                      TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+         updated_at                      TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+         UNIQUE KEY uq_bdp_route (from_branch_id, to_branch_id),
+         INDEX idx_bdp_active (is_active)
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'branch_delivery_pricing table'
+    );
+
     console.log('[Migration] Startup migration complete.\n');
 
     // ── Seed default Super Admin (idempotent) ─────────────────────────────
