@@ -5,6 +5,9 @@ const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // Wake up Render free-tier backend on app load (it sleeps after 15 min inactivity)
@@ -16,6 +19,13 @@ api.interceptors.request.use(
     const token = localStorage.getItem('flexcart_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // For FormData (file uploads), remove Content-Type so the browser can set
+    // multipart/form-data with the correct boundary automatically.
+    // Without this, the default 'application/json' header would prevent multer
+    // from parsing uploaded files on the backend.
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
