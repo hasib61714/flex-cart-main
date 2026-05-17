@@ -4,14 +4,18 @@ const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Wake up Render free-tier backend on app load (it sleeps after 15 min inactivity)
-axios.get(`${BASE_URL}/health`, { timeout: 60000 }).catch(() => {});
+// Wake up Render free-tier backend on app load (it sleeps after 15 min inactivity).
+// Use the api instance so the retry interceptor applies when the server is still cold.
+const wakeUpBackend = () => {
+  api.get('/health', { timeout: 60000, _isWakeUp: true }).catch(() => {});
+};
+wakeUpBackend();
 
 // Request interceptor — attach token
 api.interceptors.request.use(
@@ -49,12 +53,14 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const code   = error.response?.data?.code;
 
-    // Retry network errors (e.g. Render cold-start drops the connection)
-    // Allow up to 3 retries with 3s / 6s / 9s back-off
+    // Retry network errors (e.g. Render cold-start drops the connection).
+    // Allow up to 5 retries with exponential back-off capped at 30 s per attempt.
+    // Total max wait ≈ 10+20+30+30+30 = 120 s — enough for Render's ~50 s cold start.
     if (!error.response) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
-      if (originalRequest._retryCount <= 3) {
-        await new Promise(res => setTimeout(res, 3000 * originalRequest._retryCount));
+      if (originalRequest._retryCount <= 5) {
+        const delay = Math.min(10000 * originalRequest._retryCount, 30000);
+        await new Promise(res => setTimeout(res, delay));
         return api(originalRequest);
       }
     }

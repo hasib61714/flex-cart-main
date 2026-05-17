@@ -68,9 +68,12 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: response.data.message };
     } catch (error) {
+      const isNetworkError = !error.response;
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed'
+        message: isNetworkError
+          ? 'Server is waking up, please try again in a moment...'
+          : (error.response?.data?.message || 'Login failed')
       };
     }
   };
@@ -93,9 +96,12 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: response.data.message };
     } catch (error) {
+      const isNetworkError = !error.response;
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed'
+        message: isNetworkError
+          ? 'Server is waking up, please try again in a moment...'
+          : (error.response?.data?.message || 'Login failed')
       };
     }
   };
