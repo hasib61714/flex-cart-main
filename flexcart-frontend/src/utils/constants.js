@@ -34,7 +34,8 @@ export const SORT_OPTIONS = [
 ];
 
 export const PAYMENT_METHODS = [
-  { value: 'bkash',            label: 'bKash',           description: 'Mobile Banking' },
+  { value: 'sslcommerz',       label: 'Online Payment',   description: 'Cards, bKash, Nagad & more via SSLCommerz' },
+  { value: 'bkash',            label: 'bKash',            description: 'Mobile Banking' },
   { value: 'nagad',            label: 'Nagad',            description: 'Mobile Banking' },
   { value: 'rocket',           label: 'Rocket',           description: 'Mobile Banking' },
   { value: 'bank_card',        label: 'Bank Card',        description: 'Credit / Debit Card' },

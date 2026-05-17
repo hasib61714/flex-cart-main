@@ -181,6 +181,12 @@ const PaymentModal = ({ onClose, onSuccess, selectedItemIds, selectedTotal, sele
       });
 
       if (response.data.success) {
+        // SSLCommerz: redirect to payment gateway
+        if (response.data.data?.gatewayUrl) {
+          toast.success('Redirecting to payment gateway…');
+          window.location.href = response.data.data.gatewayUrl;
+          return;
+        }
         setOrderComplete(true);
         setOrderResult(response.data.data);
         await fetchCart();

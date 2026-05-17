@@ -158,6 +158,36 @@ async function runStartupMigration() {
       'password_reset_otps table'
     );
 
+    // ── SSLCommerz: orders.ssl_tran_id ───────────────────────────────────
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN ssl_tran_id VARCHAR(64) NULL DEFAULT NULL`,
+      'orders.ssl_tran_id column'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN ssl_val_id VARCHAR(64) NULL DEFAULT NULL`,
+      'orders.ssl_val_id column'
+    );
+
+    // ── ssl_transactions audit table ──────────────────────────────────────
+    await safeQuery(
+      `CREATE TABLE IF NOT EXISTS ssl_transactions (
+         id           INT AUTO_INCREMENT PRIMARY KEY,
+         order_id     INT NOT NULL,
+         tran_id      VARCHAR(64) NOT NULL,
+         val_id       VARCHAR(64) NULL DEFAULT NULL,
+         amount       DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+         currency     VARCHAR(10)  NOT NULL DEFAULT 'BDT',
+         status       VARCHAR(20)  NOT NULL DEFAULT 'pending',
+         raw_response TEXT         NULL DEFAULT NULL,
+         created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+         updated_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+         UNIQUE KEY uq_ssl_tran (tran_id),
+         INDEX idx_ssl_order (order_id),
+         FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      'ssl_transactions table'
+    );
+
     console.log('[Migration] Startup migration complete.\n');
 
     // ── Seed default Super Admin (idempotent) ─────────────────────────────

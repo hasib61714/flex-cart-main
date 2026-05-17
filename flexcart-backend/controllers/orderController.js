@@ -4,6 +4,7 @@ const { findBestMatchingRoute } = require('../services/deliveryRouteModel');
 const { appendTrackingEvent, TRACKING_STATUSES } = require('../services/orderTrackingModel');
 const { formatOrderDeliveryStatus } = require('../services/deliveryStatusFormatter');
 const { isValidPhone } = require('../utils/validators');
+const { initiatePayment: initiateSSL } = require('../services/sslService');
 
 const DEFAULT_ORIGIN_LOCATION = 'Branch 1';
 
@@ -269,9 +270,14 @@ const orderController = {
           }, 0).toFixed(2))
         : null;
 
+      const isPendingPayment = payment_method === 'cash_on_delivery' || payment_method === 'sslcommerz';
+      const sslTranId = payment_method === 'sslcommerz'
+        ? `FLEX-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
+        : null;
+
       const [orderResult] = await connection.query(
-        `INSERT INTO orders (user_id, order_number, total_amount, discount_amount, points_used, promo_code, payment_method, payment_status, shipping_address, shipping_city, shipping_country, shipping_zip, notes, from_location, to_location, route_id, current_status, receiver_mobile, district, upazila, receiver_location, delivery_charge, cod_advance_paid)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO orders (user_id, order_number, total_amount, discount_amount, points_used, promo_code, payment_method, payment_status, shipping_address, shipping_city, shipping_country, shipping_zip, notes, from_location, to_location, route_id, current_status, receiver_mobile, district, upazila, receiver_location, delivery_charge, cod_advance_paid, ssl_tran_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           orderNumber,
@@ -280,7 +286,7 @@ const orderController = {
           pointsUsed,
           promo_code || null,
           payment_method || 'bkash',
-          payment_method === 'cash_on_delivery' ? 'pending' : 'paid',
+          isPendingPayment ? 'pending' : 'paid',
           shipping_address || null,
           shipping_city || null,
           shipping_country || null,
@@ -295,7 +301,8 @@ const orderController = {
           upazila.trim(),
           receiver_location.trim(),
           deliveryCharge,
-          codAdvancePaid
+          codAdvancePaid,
+          sslTranId,
         ]
       );
 
@@ -370,6 +377,67 @@ const orderController = {
       }
 
       await connection.commit();
+
+      // --- SSLCommerz: initiate payment after committing the order ---
+      if (payment_method === 'sslcommerz') {
+        try {
+          const [userRows] = await pool.query(
+            'SELECT username, email, phone FROM users WHERE id = ? LIMIT 1',
+            [userId]
+          );
+          const user = userRows[0] || {};
+          const gatewayUrl = await initiateSSL({
+            tranId:          sslTranId,
+            totalAmount:     finalAmount,
+            customerName:    user.username || 'Customer',
+            customerEmail:   user.email    || 'customer@flexcart.com',
+            customerPhone:   receiver_mobile?.trim() || user.phone || '01700000000',
+            shippingAddress: shipping_address || district || 'Dhaka',
+            shippingCity:    shipping_city    || district || 'Dhaka',
+            productName:     `FlexCart Order #${orderNumber}`,
+          });
+          return res.status(201).json({
+            success: true,
+            message: 'Order created. Redirecting to payment gateway…',
+            data: {
+              orderId,
+              orderNumber,
+              totalAmount: finalAmount,
+              productTotal,
+              deliveryCharge,
+              discountAmount,
+              pointsUsed,
+              pointsEarned: totalPointsEarned,
+              starsEarned: totalStarsEarned,
+              paymentMethod: payment_method,
+              codAdvancePaid: 0,
+              gatewayUrl,
+              selectedRoute: {
+                id: routeSelection.routeId,
+                matchType: routeSelection.matchType,
+                fromLocation: routeSelection.fromLocation,
+                toLocation: routeSelection.toLocation,
+                hubs: routeSelection.hubs
+              }
+            }
+          });
+        } catch (sslError) {
+          console.error('SSLCommerz initiation error:', sslError.message);
+          // Order is committed; return orderId so frontend can handle it
+          return res.status(201).json({
+            success: true,
+            message: 'Order created but payment gateway initiation failed. Please retry.',
+            data: {
+              orderId,
+              orderNumber,
+              totalAmount: finalAmount,
+              paymentMethod: payment_method,
+              paymentGatewayError: true,
+            }
+          });
+        }
+      }
+
       res.status(201).json({
         success: true,
         message: 'Order placed successfully',
@@ -511,15 +579,20 @@ const orderController = {
         ? parseFloat((parseFloat(product.cod_advance_amount) * qty).toFixed(2))
         : null;
 
+      const isPendingBuyNow = payment_method === 'cash_on_delivery' || payment_method === 'sslcommerz';
+      const sslTranIdBuyNow = payment_method === 'sslcommerz'
+        ? `FLEX-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
+        : null;
+
       const [orderResult] = await connection.query(
-        `INSERT INTO orders (user_id, order_number, total_amount, discount_amount, points_used, payment_method, payment_status, shipping_address, shipping_city, shipping_country, shipping_zip, notes, from_location, to_location, route_id, current_status, receiver_mobile, district, upazila, receiver_location, delivery_charge, cod_advance_paid)
-         VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO orders (user_id, order_number, total_amount, discount_amount, points_used, payment_method, payment_status, shipping_address, shipping_city, shipping_country, shipping_zip, notes, from_location, to_location, route_id, current_status, receiver_mobile, district, upazila, receiver_location, delivery_charge, cod_advance_paid, ssl_tran_id)
+         VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           orderNumber,
           totalAmount,
           payment_method || 'bkash',
-          payment_method === 'cash_on_delivery' ? 'pending' : 'paid',
+          isPendingBuyNow ? 'pending' : 'paid',
           shipping_address || null,
           shipping_city || null,
           shipping_country || null,
@@ -534,7 +607,8 @@ const orderController = {
           upazila.trim(),
           receiver_location.trim(),
           deliveryCharge,
-          codAdvancePaid
+          codAdvancePaid,
+          sslTranIdBuyNow,
         ]
       );
 
@@ -599,6 +673,53 @@ const orderController = {
       }
 
       await connection.commit();
+
+      // --- SSLCommerz: initiate payment after committing the buy-now order ---
+      if (payment_method === 'sslcommerz') {
+        try {
+          const [userRows] = await pool.query(
+            'SELECT username, email, phone FROM users WHERE id = ? LIMIT 1',
+            [userId]
+          );
+          const user = userRows[0] || {};
+          const gatewayUrl = await initiateSSL({
+            tranId:          sslTranIdBuyNow,
+            totalAmount:     totalAmount,
+            customerName:    user.username || 'Customer',
+            customerEmail:   user.email    || 'customer@flexcart.com',
+            customerPhone:   receiver_mobile?.trim() || user.phone || '01700000000',
+            shippingAddress: shipping_address || district || 'Dhaka',
+            shippingCity:    shipping_city    || district || 'Dhaka',
+            productName:     `FlexCart Order #${orderNumber}`,
+          });
+          return res.status(201).json({
+            success: true,
+            message: 'Order created. Redirecting to payment gateway…',
+            data: {
+              orderId, orderNumber, subtotal, deliveryCharge, totalAmount,
+              pointsEarned, starsEarned,
+              paymentMethod: payment_method,
+              codAdvancePaid: 0,
+              gatewayUrl,
+              selectedRoute: {
+                id: routeSelection.routeId,
+                matchType: routeSelection.matchType,
+                fromLocation: routeSelection.fromLocation,
+                toLocation: routeSelection.toLocation,
+                hubs: routeSelection.hubs
+              }
+            }
+          });
+        } catch (sslError) {
+          console.error('SSLCommerz (buyNow) initiation error:', sslError.message);
+          return res.status(201).json({
+            success: true,
+            message: 'Order created but payment gateway initiation failed. Please retry.',
+            data: { orderId, orderNumber, totalAmount, paymentMethod: payment_method, paymentGatewayError: true }
+          });
+        }
+      }
+
       res.status(201).json({
         success: true,
         message: 'Order placed successfully',

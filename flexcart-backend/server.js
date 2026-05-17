@@ -33,6 +33,7 @@ const negotiationRoutes = require('./routes/negotiationRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const staffAdminRoutes = require('./routes/staffAdminRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -121,6 +122,7 @@ app.use('/api/negotiations', negotiationRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/staff-admin', staffAdminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

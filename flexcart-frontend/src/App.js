@@ -10,6 +10,7 @@ import MainLayout from './components/layout/MainLayout';
 import AdminLoginPage from './components/admin/AdminLoginPage';
 import Toast from './components/common/Toast';
 import MaintenancePage from './components/common/MaintenancePage';
+import PaymentResultPage from './components/common/PaymentResultPage';
 import './App.css';
 
 // Lazy-load heavy admin portal to keep the main bundle lean
@@ -60,6 +61,21 @@ function App() {
 
     const pathname = window.location.pathname;
     const portal = new URLSearchParams(window.location.search).get('portal');
+
+    // SSLCommerz payment result pages
+    const isPaymentResult = pathname === '/payment/success' || pathname === '/payment/fail';
+    if (isPaymentResult) {
+      return (
+        <AuthProvider>
+          <ThemeProvider>
+            <div className="app">
+              <PaymentResultPage />
+              <Toast />
+            </div>
+          </ThemeProvider>
+        </AuthProvider>
+      );
+    }
 
     // Dedicated admin login page
     const isAdminLogin = pathname === '/admin' || pathname === '/admin/login' || pathname.startsWith('/admin/login');
