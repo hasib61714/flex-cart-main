@@ -228,12 +228,15 @@ async function findBestMatchingRoute(fromLocation, toLocation) {
   }
 
   const [fallbackRows] = await pool.query(
-    `SELECT id, from_location, to_location,
-            (CASE WHEN LOWER(TRIM(from_location)) = ? THEN 1 ELSE 0 END +
-             CASE WHEN LOWER(TRIM(to_location)) = ? THEN 1 ELSE 0 END) AS score
-     FROM delivery_routes
-     WHERE is_active = 1
-     HAVING score > 0
+    `SELECT id, from_location, to_location, score
+     FROM (
+       SELECT id, from_location, to_location,
+              (CASE WHEN LOWER(TRIM(from_location)) = ? THEN 1 ELSE 0 END +
+               CASE WHEN LOWER(TRIM(to_location)) = ? THEN 1 ELSE 0 END) AS score
+       FROM delivery_routes
+       WHERE is_active = 1
+     ) sub
+     WHERE score > 0
      ORDER BY score DESC, id ASC
      LIMIT 1`,
     [normalizeLocation(fromLocation), normalizeLocation(toLocation)]

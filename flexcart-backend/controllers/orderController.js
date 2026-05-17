@@ -39,7 +39,8 @@ function computeDeliveryCharge(district, totalQuantity, settings) {
 
 async function getCommissionRateForCategory(categoryId, defaultRate, conn) {
   if (!categoryId) return defaultRate;
-  const db = conn || pool;
+  // Always use pool (not the transaction connection) — a failed read must not abort the transaction
+  const db = pool;
   try {
     const [[row]] = await db.query(
       'SELECT commission_rate FROM category_commissions WHERE category_id = ?',
@@ -355,12 +356,16 @@ const orderController = {
       await connection.query(`INSERT INTO notifications (user_id, type, title, message, reference_id, reference_type) VALUES (?, 'order_confirmed', 'Order Confirmed!', ?, ?, 'order')`, [userId, `Your order #${orderNumber} has been confirmed. Total: ৳${finalAmount.toFixed(2)}`, orderId]);
 
       // Record detailed revenue history for Super Admin
+      // Use SAVEPOINT so a failure here does not abort the main transaction
       try {
+        await connection.query('SAVEPOINT sp_revenue');
         await recordRevenueHistory(connection, {
           orderId, orderNumber, productTotal, discountAmount,
           deliveryCharge, commissionRate: effectiveCommissionRate, sourceType: 'cart'
         });
+        await connection.query('RELEASE SAVEPOINT sp_revenue');
       } catch (revenueErr) {
+        await connection.query('ROLLBACK TO SAVEPOINT sp_revenue').catch(() => {});
         console.error('Revenue history record error (non-fatal):', revenueErr.message);
       }
 
@@ -580,12 +585,16 @@ const orderController = {
       );
 
       // Record detailed revenue history
+      // Use SAVEPOINT so a failure here does not abort the main transaction
       try {
+        await connection.query('SAVEPOINT sp_revenue');
         await recordRevenueHistory(connection, {
           orderId, orderNumber, productTotal: subtotal, discountAmount: 0,
           deliveryCharge, commissionRate: buyNowCommissionRate, sourceType: 'buy_now'
         });
+        await connection.query('RELEASE SAVEPOINT sp_revenue');
       } catch (revenueErr) {
+        await connection.query('ROLLBACK TO SAVEPOINT sp_revenue').catch(() => {});
         console.error('Revenue history record error (non-fatal):', revenueErr.message);
       }
 
