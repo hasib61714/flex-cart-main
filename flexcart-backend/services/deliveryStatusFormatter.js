@@ -36,10 +36,10 @@ function formatOrderDeliveryStatus(order, delivery, viewerRole = 'customer') {
     ) {
       const name  = delivery.delivery_boy_name;
       const phone = delivery.delivery_boy_phone || '';
-      const boyInfo = phone ? `${name}, ${phone}` : name;
+      const boyInfo = phone ? `${name} (${phone})` : name;
       return fromBranch
-        ? `Out for Delivery from ${fromBranch} – Assigned to ${boyInfo}`
-        : `Out for Delivery – Assigned to ${boyInfo}`;
+        ? `For Delivery from Branch ${fromBranch} \u2013 ${boyInfo}`
+        : `For Delivery \u2013 ${boyInfo}`;
     }
 
     // Legacy in_transit without a delivery boy attached
@@ -58,10 +58,10 @@ function formatOrderDeliveryStatus(order, delivery, viewerRole = 'customer') {
     const fromBranch = delivery.from_branch_name || '';
     const name  = delivery.delivery_boy_name;
     const phone = delivery.delivery_boy_phone || '';
-    const boyInfo = phone ? `${name}, ${phone}` : name;
+    const boyInfo = phone ? `${name} (${phone})` : name;
     return fromBranch
-      ? `Out for Delivery from ${fromBranch} – Assigned to ${boyInfo}`
-      : `Out for Delivery – Assigned to ${boyInfo}`;
+      ? `For Delivery from Branch ${fromBranch} \u2013 ${boyInfo}`
+      : `For Delivery \u2013 ${boyInfo}`;
   }
 
   // ── Branch assignment flow ────────────────────────────────────────────────
@@ -70,11 +70,8 @@ function formatOrderDeliveryStatus(order, delivery, viewerRole = 'customer') {
 
   if (branchName) {
     if (order.branch_accepted_at) {
-      // Came from another branch (reassignment path) → "In Branch [Name]"
-      if (prevBranch) return `In Branch ${branchName}`;
-      // First direct acceptance → role-specific
-      if (viewerRole === 'seller') return 'Branch Accepted';
-      return `Accepted by ${branchName}`;
+      // Accepted at current branch (first-time or after reassignment) → "In [Branch Name]"
+      return `In ${branchName}`;
     }
 
     // Not yet accepted at current branch

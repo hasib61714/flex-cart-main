@@ -310,25 +310,32 @@ const deliveryController = {
         `SELECT o.id, o.order_number, o.order_status, o.current_status, o.assigned_branch_id,
                 o.assigned_branch_at, o.branch_accepted_at,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
-                u.username as customer_name, u.phone as customer_phone,
-                ab.name as assigned_branch_name,
-                pb.name as previous_branch_name,
-                GROUP_CONCAT(DISTINCT c.company_name ORDER BY c.company_name SEPARATOR ', ') as company_names,
-                SUM(oi.total_price) as order_total
+                o.payment_method, o.payment_status, o.delivery_charge,
+                u.username AS customer_name, u.phone AS customer_phone,
+                ab.name AS assigned_branch_name,
+                pb.name AS previous_branch_name,
+                (
+                  SELECT STRING_AGG(cname, ', ' ORDER BY cname)
+                  FROM (
+                    SELECT DISTINCT comp.company_name AS cname
+                    FROM companies comp
+                    JOIN order_items oi2 ON oi2.company_id = comp.id
+                    WHERE oi2.order_id = o.id
+                  ) _cn
+                ) AS company_names,
+                (
+                  SELECT SUM(oi2.total_price)
+                  FROM order_items oi2
+                  WHERE oi2.order_id = o.id
+                ) AS order_total
          FROM orders o
          JOIN users u ON u.id = o.user_id
-         JOIN order_items oi ON oi.order_id = o.id
-         JOIN companies c ON c.id = oi.company_id
          LEFT JOIN branches ab ON ab.id = o.assigned_branch_id
          LEFT JOIN branches pb ON pb.id = o.previous_branch_id
          LEFT JOIN deliveries d ON d.order_id = o.id
          WHERE o.assigned_branch_id = ?
            AND d.id IS NULL
            AND o.order_status NOT IN ('cancelled', 'delivered', 'returned')
-         GROUP BY o.id, o.order_number, o.order_status, o.current_status, o.assigned_branch_id,
-                  o.assigned_branch_at, o.branch_accepted_at,
-                  o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
-                  u.username, u.phone, ab.name, pb.name
          ORDER BY (o.branch_accepted_at IS NULL) DESC, o.assigned_branch_at DESC, o.created_at DESC`,
         [branchId]
       );
