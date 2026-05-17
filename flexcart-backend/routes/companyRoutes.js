@@ -4,31 +4,52 @@ const companyController = require('../controllers/companyController');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const { cloudinary } = require('../middleware/upload');
+const { cloudinary, cloudinaryConfigured } = require('../middleware/upload');
+
+const path = require('path');
+const fs   = require('fs');
+
+// Build a multer storage that routes each field to a different folder,
+// falling back to local disk when Cloudinary env vars are not configured.
+const createFieldStorage = (fieldFolderMap) => {
+    if (cloudinaryConfigured) {
+        return new CloudinaryStorage({
+            cloudinary,
+            params: (req, file) => {
+                const folder = fieldFolderMap[file.fieldname] || 'flexcart/misc';
+                return { folder, allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'], resource_type: 'image' };
+            },
+        });
+    }
+    // Disk fallback — mirrors upload.js createStorage logic
+    return multer.diskStorage({
+        destination: (req, file, cb) => {
+            const sub = (fieldFolderMap[file.fieldname] || 'flexcart/misc').replace('flexcart/', '');
+            const dir = path.join(__dirname, '..', 'uploads', sub);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            cb(null, dir);
+        },
+        filename: (req, file, cb) =>
+            cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`),
+    });
+};
 
 const companyUpload = multer({
-    storage: new CloudinaryStorage({
-        cloudinary,
-        params: (req, file) => {
-            let folder = 'flexcart/companies';
-            if (file.fieldname === 'nid_front_image' || file.fieldname === 'nid_back_image') {
-                folder = 'flexcart/nids';
-            } else if (file.fieldname === 'face_image') {
-                folder = 'flexcart/faces';
-            }
-            return { folder, allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'], resource_type: 'image' };
-        },
+    storage: createFieldStorage({
+        company_logo:    'flexcart/companies',
+        cover_image:     'flexcart/companies',
+        promo_banner:    'flexcart/companies',
+        nid_front_image: 'flexcart/nids',
+        nid_back_image:  'flexcart/nids',
+        face_image:      'flexcart/faces',
     }),
     limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 const productUpload = multer({
-    storage: new CloudinaryStorage({
-        cloudinary,
-        params: (req, file) => {
-            const folder = file.fieldname === 'ar_qr_image' ? 'flexcart/products/ar' : 'flexcart/products';
-            return { folder, allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'], resource_type: 'image' };
-        },
+    storage: createFieldStorage({
+        images:      'flexcart/products',
+        ar_qr_image: 'flexcart/products/ar',
     }),
     limits: { fileSize: 100 * 1024 * 1024 },
 });

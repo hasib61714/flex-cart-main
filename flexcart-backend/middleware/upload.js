@@ -86,4 +86,4 @@ const uploadDeliveryProof = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-module.exports = { uploadProfile, uploadProduct, uploadCompany, uploadNID, uploadAI, uploadDeliveryProof, cloudinary };
+module.exports = { uploadProfile, uploadProduct, uploadCompany, uploadNID, uploadAI, uploadDeliveryProof, cloudinary, cloudinaryConfigured, createStorage };
