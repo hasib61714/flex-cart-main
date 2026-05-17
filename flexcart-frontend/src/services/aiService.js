@@ -1,9 +1,7 @@
 import api from './api';
 
 const aiService = {
-  processImage: (formData) => api.post('/ai/process', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  processImage: (formData) => api.post('/ai/process', formData),
   getSearchHistory: () => api.get('/ai/history')
 };
 

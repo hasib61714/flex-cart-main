@@ -45,9 +45,7 @@ const ImageSearchModal = ({ onClose }) => {
       formData.append('image', imageFile);
       if (description.trim()) formData.append('description', description.trim());
 
-      const res = await api.post('/ai/process', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/ai/process', formData);
 
       if (res.data.success) {
         const inStock = res.data.data?.inStock || [];

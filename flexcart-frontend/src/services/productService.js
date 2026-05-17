@@ -7,9 +7,7 @@ const productService = {
   getCategories: () => api.get('/products/categories'),
   getHybridRecommendations: (params) => api.get('/products/recommendations/hybrid', { params }),
   compareSimilarProducts: (productId) => api.get(`/products/${productId}/compare`),
-  createProduct: (formData) => api.post('/products', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  createProduct: (formData) => api.post('/products', formData)
 };
 
 export default productService;

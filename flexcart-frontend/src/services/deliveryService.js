@@ -37,9 +37,7 @@ const deliveryService = {
   getDriverAssignments: (params) => api.get('/delivery/driver/assignments', { params }),
   getDriverHistory: (params) => api.get('/delivery/driver/history', { params }),
   getDriverAllDeliveries: (params) => api.get('/delivery/driver/all', { params }),
-  completeDelivery: (formData) => api.post('/delivery/driver/complete', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  completeDelivery: (formData) => api.post('/delivery/driver/complete', formData),
   rejectDelivery: (orderNumber, reason) => api.post('/delivery/driver/reject', { orderNumber, reason }),
 };
 

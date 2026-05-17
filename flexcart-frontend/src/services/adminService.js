@@ -72,12 +72,8 @@ const adminService = {
   getDeliveryCharge:    (params)    => api.get('/orders/delivery-charge', { params }),
 
   getAdPromotions:      ()          => api.get('/super-admin/ads'),
-  createAdPromotion:    (formData)  => api.post('/super-admin/ads', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  updateAdPromotion:    (id, formData) => api.put(`/super-admin/ads/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  createAdPromotion:    (formData)  => api.post('/super-admin/ads', formData),
+  updateAdPromotion:    (id, formData) => api.put(`/super-admin/ads/${id}`, formData),
   deleteAdPromotion:    (id)        => api.delete(`/super-admin/ads/${id}`),
 
   getAuditLog:          (params)    => api.get('/super-admin/audit-log', { params }),

@@ -125,9 +125,7 @@ export const CompanyProvider = ({ children }) => {
     const createCompany = async (formData) => {
         if (!isAuthenticated) return { success: false };
         try {
-            const res = await api.post('/companies', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.post('/companies', formData);
             if (res.data.success) {
                 setMyCompanies(prev => [res.data.data, ...prev]);
                 if (!activeCompany) setActiveCompany(res.data.data);
@@ -145,9 +143,7 @@ export const CompanyProvider = ({ children }) => {
     const updateCompany = async (formData) => {
         if (!isAuthenticated) return { success: false };
         try {
-            const res = await api.put('/companies', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.put('/companies', formData);
             if (res.data.success) {
                 setMyCompanies(prev =>
                     prev.map(c => c.id === res.data.data.id ? res.data.data : c)
@@ -169,9 +165,7 @@ export const CompanyProvider = ({ children }) => {
     const addProduct = async (formData) => {
         if (!isAuthenticated) return { success: false };
         try {
-            const res = await api.post('/companies/products', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.post('/companies/products', formData);
             if (res.data.success && activeCompany) {
                 fetchCompanyDashboard(activeCompany.id);
             }
@@ -188,9 +182,7 @@ export const CompanyProvider = ({ children }) => {
     const updateProduct = async (productId, formData) => {
         if (!isAuthenticated) return { success: false };
         try {
-            const res = await api.put(`/companies/products/${productId}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.put(`/companies/products/${productId}`, formData);
             if (res.data.success && activeCompany) {
                 fetchCompanyDashboard(activeCompany.id);
             }

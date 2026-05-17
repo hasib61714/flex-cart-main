@@ -43,8 +43,8 @@ api.interceptors.response.use(
     const code   = error.response?.data?.code;
 
     // Retry network errors (e.g. Render cold-start drops the connection)
-    if (!error.response && !originalRequest._networkRetry) {
-      originalRequest._networkRetry = true;
+    // Allow up to 3 retries with 3s / 6s / 9s back-off
+    if (!error.response) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
       if (originalRequest._retryCount <= 3) {
         await new Promise(res => setTimeout(res, 3000 * originalRequest._retryCount));
