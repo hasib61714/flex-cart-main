@@ -458,11 +458,12 @@ const saveSellerNegotiationRules = async (req, res) => {
         await pool.query('DELETE FROM seller_negotiation_rules WHERE company_id = ?', [companyId]);
 
         if (rules.length > 0) {
-            const values = rules.map(r => [companyId, r.min_orders, r.max_orders || null, parseFloat(r.discount_percent)]);
-            await pool.query(
-                'INSERT INTO seller_negotiation_rules (company_id, min_orders, max_orders, discount_percent) VALUES ?',
-                [values]
-            );
+            for (const r of rules) {
+                await pool.query(
+                    'INSERT INTO seller_negotiation_rules (company_id, min_orders, max_orders, discount_percent) VALUES (?, ?, ?, ?)',
+                    [companyId, r.min_orders, r.max_orders || null, parseFloat(r.discount_percent)]
+                );
+            }
         }
 
         res.json({ success: true, message: 'Negotiation rules saved successfully' });

@@ -1128,12 +1128,6 @@ const CompanyDashboard = ({ onRequireAuth }) => {
             {negRulesMsg && (
               <p className={`cd-cover-msg ${negRulesMsg.startsWith('✓') ? 'success' : 'error'}`}>{negRulesMsg}</p>
             )}
-
-            <div className="cd-neg-rules__example">
-              <strong>Example:</strong> Min Orders: 1, Max Orders: 3, Discount: 5% → customers with 1–3 past orders get 5% off.
-              Leave Max Orders blank for "11+ orders gets 15% off" type rules.
-              Prices will never drop below the product's configured minimum price.
-            </div>
           </div>
         )}
       </div>
