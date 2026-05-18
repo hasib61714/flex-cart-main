@@ -327,7 +327,7 @@ const orderController = {
         const starsEarned = Math.min(parseFloat(((item.stars_reward || 0) * item.quantity).toFixed(2)), 99.99);
 
         await connection.query(
-          `INSERT INTO order_items (order_id, product_id, company_id, quantity, unit_price, total_price, points_earned, stars_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,`
+          `INSERT INTO order_items (order_id, product_id, company_id, quantity, unit_price, total_price, points_earned, stars_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [orderId, item.product_id, item.company_id, item.quantity, itemPrice, itemTotal, pointsEarned, starsEarned]
         );
 
