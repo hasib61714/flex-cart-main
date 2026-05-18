@@ -120,7 +120,7 @@ const spinRewardController = {
         );
       } else if (selected.type === 'stars') {
         await pool.query(
-          'UPDATE users SET stars = stars + ?, last_spin_date = NOW() WHERE id = ?',
+          'UPDATE users SET stars = LEAST(5, stars + ?), last_spin_date = NOW() WHERE id = ?',
           [selected.value, req.user.id]
         );
       } else {

@@ -38,7 +38,7 @@ async function runStartupMigration() {
 
     // ── orders: allow NULL on shipping_address ─────────────────────────────
     await safeQuery(
-      `ALTER TABLE orders MODIFY COLUMN shipping_address TEXT NULL DEFAULT NULL`,
+      `ALTER TABLE orders ALTER COLUMN shipping_address DROP NOT NULL`,
       'orders.shipping_address → nullable'
     );
 
@@ -254,6 +254,22 @@ async function runStartupMigration() {
     await safeQuery(
       `ALTER TABLE orders ADD COLUMN cod_advance_paid DECIMAL(12,2) DEFAULT 0.00`,
       'orders.cod_advance_paid'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN receiver_mobile VARCHAR(20) DEFAULT NULL`,
+      'orders.receiver_mobile'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN district VARCHAR(100) DEFAULT NULL`,
+      'orders.district'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN upazila VARCHAR(100) DEFAULT NULL`,
+      'orders.upazila'
+    );
+    await safeQuery(
+      `ALTER TABLE orders ADD COLUMN receiver_location TEXT DEFAULT NULL`,
+      'orders.receiver_location'
     );
 
     // ── users: delivery worker columns ────────────────────────────────────

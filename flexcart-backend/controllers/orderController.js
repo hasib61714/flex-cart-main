@@ -158,6 +158,9 @@ const orderController = {
         return res.status(400).json({ success: false, message: 'Receiver mobile must be a valid Bangladesh number (e.g. 01712345678)' });
       }
       if (!district?.trim()) {
+        return res.status(400).json({ success: false, message: 'District is required' });
+      }
+      if (!upazila?.trim()) {
         return res.status(400).json({ success: false, message: 'Upazila is required' });
       }
       if (!receiver_location?.trim()) {
@@ -300,7 +303,7 @@ const orderController = {
           TRACKING_STATUSES.ORDER_PLACED,
           receiver_mobile.trim(),
           district.trim(),
-          upazila.trim(),
+          upazila?.trim() || null,
           receiver_location.trim(),
           deliveryCharge,
           codAdvancePaid,
@@ -473,8 +476,8 @@ const orderController = {
       });
     } catch (error) {
       await connection.rollback();
-      console.error('Create Order Error:', error);
-      res.status(500).json({ success: false, message: 'Server error creating order' });
+      console.error('Create Order Error:', error.code, error.message, error.detail || '');
+      res.status(500).json({ success: false, message: 'Server error creating order', debug: `${error.code || 'ERR'}: ${error.message}` });
     } finally {
       connection.release();
     }
@@ -765,8 +768,8 @@ const orderController = {
       });
     } catch (error) {
       await connection.rollback();
-      console.error('Buy Now Error:', error);
-      res.status(500).json({ success: false, message: 'Server error placing order' });
+      console.error('Buy Now Error:', error.code, error.message, error.detail || '');
+      res.status(500).json({ success: false, message: 'Server error placing order', debug: `${error.code || 'ERR'}: ${error.message}` });
     } finally {
       connection.release();
     }
@@ -830,7 +833,7 @@ const orderController = {
       if (cartTotal < parseFloat(promo.min_order_amount || 0)) {
         return res.json({
           success: false,
-          message: `Minimum order of $${parseFloat(promo.min_order_amount).toFixed(2)} required`
+          message: `Minimum order of ৳${parseFloat(promo.min_order_amount).toFixed(2)} required`
         });
       }
 
