@@ -5,20 +5,19 @@ const superAdminController = require('../controllers/superAdminController');
 const staffAdminController = require('../controllers/staffAdminController');
 const multer = require('multer');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const { createStorage, cloudinaryConfigured } = require('../middleware/upload');
 
 const superOnly = requireRoles('super_admin');
 
-// Ad banner upload (inline multer config)
-const adsDir = './uploads/ads';
-if (!fs.existsSync(adsDir)) fs.mkdirSync(adsDir, { recursive: true });
+// Ad banner upload — use Cloudinary when configured, fall back to local disk
+const adsLocalDir = path.join(__dirname, '..', 'uploads', 'ads');
+if (!cloudinaryConfigured && !fs.existsSync(adsLocalDir)) {
+  fs.mkdirSync(adsLocalDir, { recursive: true });
+}
 
 const adBannerUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, adsDir),
-    filename: (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
-  }),
+  storage: createStorage('ads'),
   fileFilter: (req, file, cb) => {
     const ok = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype);
     cb(ok ? null : new Error('Only image files allowed'), ok);

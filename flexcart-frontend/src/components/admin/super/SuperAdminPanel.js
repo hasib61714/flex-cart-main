@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { AuthContext } from '../../../context/AuthContext';
 import adminService from '../../../services/adminService';
 import api from '../../../services/api';
+import { getImageUrl } from '../../../utils/helpers';
 import {
   LayoutDashboard, Shield, Users, DollarSign, TrendingUp, Megaphone,
   ClipboardList, LogOut, Menu, X, Plus, Pencil, Trash2, PauseCircle,
@@ -1181,11 +1182,16 @@ const SuperAdminPanel = ({ onRequireAuth }) => {
                   <div className="sp-loading"><RefreshCcw size={20} className="sp-spin"/> Loading ads…</div>
                 ) : (
                 <table className="sp-table">
-                  <thead><tr><th>Advertiser</th><th>Fee</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+                  <thead><tr><th>Advertiser</th><th>Banner</th><th>Fee</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
                   <tbody>
                     {ads.map(a => (
                       <tr key={a.id}>
                         <td className="sp-td-strong">{a.advertiser_name}</td>
+                        <td>
+                          {a.banner_image
+                            ? <img src={getImageUrl(a.banner_image)} alt="banner" style={{height:40,borderRadius:4,objectFit:'cover',maxWidth:80}}/>
+                            : <span className="sp-td-muted">—</span>}
+                        </td>
                         <td>৳{Number(a.fee_amount||0).toFixed(2)}</td>
                         <td className="sp-td-muted">{new Date(a.start_date).toLocaleDateString()}</td>
                         <td className="sp-td-muted">{new Date(a.end_date).toLocaleDateString()}</td>

@@ -134,6 +134,10 @@ app.use('/api/staff-admin', staffAdminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/payment', paymentRoutes);
 
+// Public ads endpoint — active ads for all visitors
+const superAdminController = require('./controllers/superAdminController');
+app.get('/api/ads', superAdminController.getActiveAds);
+
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({

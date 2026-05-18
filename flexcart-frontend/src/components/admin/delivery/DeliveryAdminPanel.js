@@ -86,7 +86,27 @@ function OrderInfoCard({ item }) {
   return (
     <div className="dap-oi-grid">
       <div className="dap-oi-row"><User size={12}/><span><strong>{item.customer_name || '—'}</strong></span></div>
-      {item.customer_phone && <div className="dap-oi-row"><Phone size={12}/><span>{item.customer_phone}</span></div>}
+      {(item.customer_phone || item.receiver_mobile) && (
+        <div className="dap-oi-row">
+          <Phone size={12}/>
+          <span>
+            {item.customer_phone}{item.receiver_mobile && item.receiver_mobile !== item.customer_phone ? ` / রিসিভ: ${item.receiver_mobile}` : ''}
+          </span>
+        </div>
+      )}
+      {(item.district || item.upazila) && (
+        <div className="dap-oi-row">
+          <MapPin size={12}/>
+          <span>
+            {item.district && <><strong>জেলা:</strong> {item.district}</>}
+            {item.district && item.upazila && ' • '}
+            {item.upazila && <><strong>থানা:</strong> {item.upazila}</>}
+          </span>
+        </div>
+      )}
+      {item.receiver_location && (
+        <div className="dap-oi-row"><MapPin size={12}/><span><strong>প্রাপ্তি লোকেশন:</strong> {item.receiver_location}</span></div>
+      )}
       <div className="dap-oi-row"><MapPin size={12}/><span>{addr}</span></div>
       {item.company_names && <div className="dap-oi-row"><Package size={12}/><span>{item.company_names}</span></div>}
       {item.order_total != null && (
@@ -179,6 +199,7 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
   const [queueLoading, setQueueLoading]       = useState(false);
   const [deliveriesLoading, setDeliveriesLoading] = useState(false);
   const [acceptingId, setAcceptingId]         = useState(null);
+  const queueInitialized = useRef(false); // prevents spinner on background polls
 
   /* ─── Reassign Branch Modal ── */
   const [reassignModal, setReassignModal]     = useState(null);
@@ -203,12 +224,18 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
 
   const loadBranchAssignments = useCallback(async () => {
     if (!isAuthenticated || !canAccess) return;
-    setQueueLoading(true);
+    // Only show the loading spinner on the very first fetch — subsequent
+    // background polls (setInterval) update data silently to prevent flicker.
+    const showSpinner = !queueInitialized.current;
+    if (showSpinner) setQueueLoading(true);
     try {
       const res = await deliveryService.getBranchAssignments();
-      if (res?.data?.success) setBranchAssignments(res.data.data || []);
-    } catch { setBranchAssignments([]); }
-    finally { setQueueLoading(false); }
+      if (res?.data?.success) {
+        setBranchAssignments(res.data.data || []);
+        queueInitialized.current = true;
+      }
+    } catch { /* keep stale data on error */ }
+    finally { if (showSpinner) setQueueLoading(false); }
   }, [isAuthenticated, canAccess]);
 
   const loadStats = useCallback(async () => {
@@ -700,6 +727,7 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
                         <th>Order #</th>
                         <th>Customer</th>
                         <th>Delivery Boy</th>
+                        <th>District / Thana</th>
                         <th>Destination</th>
                         <th>Status</th>
                         <th>Assigned</th>
@@ -712,12 +740,24 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
                           <td>
                             <div>{d.customer_name || '—'}</div>
                             {d.customer_phone && <div className="dap-cell-sub"><Phone size={10}/> {d.customer_phone}</div>}
+                            {d.receiver_mobile && d.receiver_mobile !== d.customer_phone && (
+                              <div className="dap-cell-sub"><Phone size={10}/> রিসিভ: {d.receiver_mobile}</div>
+                            )}
                           </td>
                           <td>
                             <div>{d.delivery_boy_name || '—'}</div>
                             {d.delivery_boy_phone && <div className="dap-cell-sub"><Phone size={10}/> {d.delivery_boy_phone}</div>}
                           </td>
                           <td>
+                            {(d.district || d.upazila) ? (
+                              <div className="dap-cell-sub">
+                                {d.district && <div>জেলা: <strong>{d.district}</strong></div>}
+                                {d.upazila  && <div>থানা: <strong>{d.upazila}</strong></div>}
+                              </div>
+                            ) : <span>—</span>}
+                          </td>
+                          <td>
+                            {d.receiver_location && <div className="dap-cell-sub" style={{marginBottom:'2px'}}>প্রাপ্তি: {d.receiver_location}</div>}
                             <div className="dap-cell-sub"><MapPin size={10}/> {joinAddr(d.shipping_address, d.shipping_city, d.shipping_country)}</div>
                           </td>
                           <td><StatusBadge status={d.status}/></td>
@@ -752,6 +792,7 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
                         <th>Order #</th>
                         <th>Customer</th>
                         <th>Delivery Boy</th>
+                        <th>District / Thana</th>
                         <th>Destination</th>
                         <th>Result</th>
                         <th>Reason / Notes</th>
@@ -771,6 +812,15 @@ const DeliveryAdminPanel = ({ onRequireAuth }) => {
                             {d.delivery_boy_phone && <div className="dap-cell-sub"><Phone size={10}/> {d.delivery_boy_phone}</div>}
                           </td>
                           <td>
+                            {(d.district || d.upazila) ? (
+                              <div className="dap-cell-sub">
+                                {d.district && <div>জেলা: <strong>{d.district}</strong></div>}
+                                {d.upazila  && <div>থানা: <strong>{d.upazila}</strong></div>}
+                              </div>
+                            ) : <span>—</span>}
+                          </td>
+                          <td>
+                            {d.receiver_location && <div className="dap-cell-sub" style={{marginBottom:'2px'}}>প্রাপ্তি: {d.receiver_location}</div>}
                             <div className="dap-cell-sub"><MapPin size={10}/> {joinAddr(d.shipping_address, d.shipping_city, d.shipping_country)}</div>
                           </td>
                           <td><StatusBadge status={d.status}/></td>

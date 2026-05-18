@@ -456,8 +456,13 @@ const DeliveryBoyPanel = ({ onRequireAuth }) => {
                   <ArrowRight size={12} />
                   <span>{a.to_branch_name}</span>
                 </div>
-                {a.delivery_type === 'branch_to_branch_address' && a.shipping_address && (
-                  <div className="dbp-card-addr"><Navigation size={11} /> {a.shipping_address}</div>
+                {a.delivery_type === 'branch_to_branch_address' && (a.district || a.upazila || a.shipping_address || a.receiver_location) && (
+                  <div className="dbp-card-addr">
+                    <Navigation size={11} />
+                    {a.district && <span>জেলা: {a.district}</span>}
+                    {a.upazila  && <span style={{marginLeft:'4px'}}>থানা: {a.upazila}</span>}
+                    {a.receiver_location && <span style={{marginLeft:'4px',opacity:0.8}}>{a.receiver_location}</span>}
+                  </div>
                 )}
                 <div className="dbp-card-time">
                   <Clock size={11} />
@@ -503,10 +508,32 @@ const DeliveryBoyPanel = ({ onRequireAuth }) => {
                   <strong>{selected.from_branch_name} → {selected.to_branch_name}</strong>
                 </div>
                 {selected.delivery_type === 'branch_to_branch_address' && (
-                  <div className="dbp-detail-row">
-                    <Navigation size={14} /><span>Deliver To</span>
-                    <strong>{[selected.shipping_address, selected.shipping_city, selected.shipping_country, selected.shipping_zip].filter(Boolean).join(', ')}</strong>
-                  </div>
+                  <>
+                    {(selected.district || selected.upazila) && (
+                      <div className="dbp-detail-row">
+                        <MapPin size={14}/><span>জেলা / থানা</span>
+                        <strong>
+                          {[selected.district && `জেলা: ${selected.district}`, selected.upazila && `থানা: ${selected.upazila}`].filter(Boolean).join('  •  ')}
+                        </strong>
+                      </div>
+                    )}
+                    {selected.receiver_location && (
+                      <div className="dbp-detail-row">
+                        <Navigation size={14}/><span>প্রাপ্তি লোকেশন</span>
+                        <strong>{selected.receiver_location}</strong>
+                      </div>
+                    )}
+                    <div className="dbp-detail-row">
+                      <Navigation size={14}/><span>Deliver To</span>
+                      <strong>{[selected.shipping_address, selected.shipping_city, selected.shipping_country, selected.shipping_zip].filter(Boolean).join(', ')}</strong>
+                    </div>
+                    {selected.receiver_mobile && (
+                      <div className="dbp-detail-row">
+                        <Phone size={14}/><span>রিসিভার ফোন</span>
+                        <a href={`tel:${selected.receiver_mobile}`} className="dbp-link">{selected.receiver_mobile}</a>
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className="dbp-detail-row">
                   <Truck size={14} /><span>Vehicle</span>

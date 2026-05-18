@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
 import ProductDetail from './ProductDetail';
 import LoadingSpinner from '../common/LoadingSpinner';
+import AdBanner from '../common/AdBanner';
 import BuyNowModal from '../cart/BuyNowModal';
 import productService from '../../services/productService';
 import { CartContext } from '../../context/CartContext';
@@ -260,6 +261,9 @@ const Home = ({ category, sort, filters, onRequireAuth, showRecommendations }) =
 
   return (
     <div className="home-container">
+      {/* Ad Banner — displays active promotions from super admin */}
+      <AdBanner />
+
       {isAuthenticated && showRecommendations && (
         <div className="home-recommendations">
           <div className="home-section-title">Recommended for You</div>

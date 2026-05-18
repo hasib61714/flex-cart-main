@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { normalizeFilePath } = require('../utils/fileUtils');
 const { indexProductImage } = require('../middleware/aiProcessor');
 const { appendTrackingEvent, TRACKING_STATUSES } = require('../services/orderTrackingModel');
 const { formatOrderDeliveryStatus } = require('../services/deliveryStatusFormatter');
@@ -196,18 +197,19 @@ const createCompany = async (req, res) => {
             }
         }
 
-        // Get file paths
+        // Get file paths — normalise so Cloudinary URLs are kept as-is
+        // and local disk paths are stored as /uploads/... relative URLs
         const nidFrontImage = req.files?.nid_front_image?.[0]
-            ? req.files.nid_front_image[0].path
+            ? normalizeFilePath(req.files.nid_front_image[0].path)
             : null;
         const nidBackImage = req.files?.nid_back_image?.[0]
-            ? req.files.nid_back_image[0].path
+            ? normalizeFilePath(req.files.nid_back_image[0].path)
             : null;
         const faceImage = req.files?.face_image?.[0]
-            ? req.files.face_image[0].path
+            ? normalizeFilePath(req.files.face_image[0].path)
             : null;
         const companyLogo = req.files?.company_logo?.[0]
-            ? req.files.company_logo[0].path
+            ? normalizeFilePath(req.files.company_logo[0].path)
             : null;
 
         if (!nidFrontImage || !nidBackImage) {
@@ -654,15 +656,15 @@ const updateCompany = async (req, res) => {
         } = req.body;
 
         const companyLogo = req.files?.company_logo?.[0]
-            ? req.files.company_logo[0].path
+            ? normalizeFilePath(req.files.company_logo[0].path)
             : undefined;
 
         const coverImage = req.files?.cover_image?.[0]
-            ? req.files.cover_image[0].path
+            ? normalizeFilePath(req.files.cover_image[0].path)
             : undefined;
 
         const promoBanner = req.files?.promo_banner?.[0]
-            ? req.files.promo_banner[0].path
+            ? normalizeFilePath(req.files.promo_banner[0].path)
             : undefined;
 
         let query = `UPDATE companies SET 

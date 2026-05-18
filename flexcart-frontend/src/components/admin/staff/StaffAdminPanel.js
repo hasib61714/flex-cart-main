@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { AuthContext } from '../../../context/AuthContext';
 import adminService from '../../../services/adminService';
 import api from '../../../services/api';
+import { getImageUrl } from '../../../utils/helpers';
 import {
   LayoutDashboard, GitBranch, Users, Truck, ShoppingCart,
   UserCheck, Package, BarChart2, MessageSquare, LogOut, Menu, X,
@@ -730,7 +731,7 @@ const StaffAdminPanel = ({ onRequireAuth }) => {
                       <div key={ver.id} className="sap-ver-card" onClick={() => setSelectedVer(ver)}>
                         <div className="sap-ver-card-top">
                           {ver.company_logo
-                            ? <img src={`http://localhost:5000${ver.company_logo}`} alt="" className="sap-ver-logo"/>
+                            ? <img src={getImageUrl(ver.company_logo)} alt="" className="sap-ver-logo"/>
                             : <div className="sap-ver-logo-placeholder"><Building2 size={22}/></div>
                           }
                           <div>
@@ -744,9 +745,9 @@ const StaffAdminPanel = ({ onRequireAuth }) => {
                           <span>{new Date(ver.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="sap-ver-imgs">
-                          {ver.nid_front_image && <img src={`http://localhost:5000${ver.nid_front_image}`} alt="NID Front" title="NID Front"/>}
-                          {ver.nid_back_image  && <img src={`http://localhost:5000${ver.nid_back_image}`}  alt="NID Back"  title="NID Back"/>}
-                          {ver.face_image      && <img src={`http://localhost:5000${ver.face_image}`}      alt="Face"      title="Face Photo"/>}
+                          {ver.nid_front_image && <img src={getImageUrl(ver.nid_front_image)} alt="NID Front" title="NID Front"/>}
+                          {ver.nid_back_image  && <img src={getImageUrl(ver.nid_back_image)}  alt="NID Back"  title="NID Back"/>}
+                          {ver.face_image      && <img src={getImageUrl(ver.face_image)}      alt="Face"      title="Face Photo"/>}
                         </div>
                         {ver.verification_status === 'pending' && (
                           <div className="sap-ver-actions">
@@ -797,20 +798,20 @@ const StaffAdminPanel = ({ onRequireAuth }) => {
                         <div className="sap-drawer-title"><CreditCard size={15}/> Identity Documents</div>
                         <div className="sap-drawer-docs">
                           {selectedVer.nid_front_image && (
-                            <div className="sap-doc-item" onClick={() => setLightboxImg(`http://localhost:5000${selectedVer.nid_front_image}`)}>
-                              <img src={`http://localhost:5000${selectedVer.nid_front_image}`} alt="NID Front"/>
+                            <div className="sap-doc-item" onClick={() => setLightboxImg(getImageUrl(selectedVer.nid_front_image))}>
+                              <img src={getImageUrl(selectedVer.nid_front_image)} alt="NID Front"/>
                               <span>NID Front</span>
                             </div>
                           )}
                           {selectedVer.nid_back_image && (
-                            <div className="sap-doc-item" onClick={() => setLightboxImg(`http://localhost:5000${selectedVer.nid_back_image}`)}>
-                              <img src={`http://localhost:5000${selectedVer.nid_back_image}`} alt="NID Back"/>
+                            <div className="sap-doc-item" onClick={() => setLightboxImg(getImageUrl(selectedVer.nid_back_image))}>
+                              <img src={getImageUrl(selectedVer.nid_back_image)} alt="NID Back"/>
                               <span>NID Back</span>
                             </div>
                           )}
                           {selectedVer.face_image && (
-                            <div className="sap-doc-item" onClick={() => setLightboxImg(`http://localhost:5000${selectedVer.face_image}`)}>
-                              <img src={`http://localhost:5000${selectedVer.face_image}`} alt="Face"/>
+                            <div className="sap-doc-item" onClick={() => setLightboxImg(getImageUrl(selectedVer.face_image))}>
+                              <img src={getImageUrl(selectedVer.face_image)} alt="Face"/>
                               <span>Live Photo</span>
                             </div>
                           )}

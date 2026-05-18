@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { normalizeFilePath } = require('../utils/fileUtils');
 
 // ─── Audit Logger ────────────────────────────────────────────
 const logAudit = async (userId, role, action, targetType, targetId, details, ip) => {
@@ -500,6 +501,24 @@ const superAdminController = {
   },
 
   // ─── Ad Promotions ────────────────────────────────────────
+  // Public endpoint — returns currently active ads for all users
+  getActiveAds: async (req, res) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [ads] = await pool.query(`
+        SELECT id, advertiser_name, banner_image, link_url, start_date, end_date
+        FROM ad_promotions
+        WHERE is_active = 1
+          AND start_date <= ?
+          AND end_date >= ?
+        ORDER BY created_at DESC
+      `, [today, today]);
+      res.json({ success: true, data: ads });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Failed to fetch ads' });
+    }
+  },
+
   getAdPromotions: async (req, res) => {
     try {
       const [ads] = await pool.query(`
@@ -522,10 +541,10 @@ const superAdminController = {
         return res.status(400).json({ success: false, message: 'advertiserName, startDate, endDate are required' });
       }
 
-      // Handle file upload OR url
+      // Handle file upload OR url — normalise so Cloudinary URLs stay as-is
       let bannerImage = bannerUrl || '';
       if (req.file) {
-        bannerImage = `/uploads/ads/${req.file.filename}`;
+        bannerImage = normalizeFilePath(req.file.path);
       }
 
       const [result] = await pool.query(
@@ -555,8 +574,14 @@ const superAdminController = {
       const updates = [];
       const params = [];
       if (advertiserName) { updates.push('advertiser_name = ?'); params.push(advertiserName.trim()); }
-      if (bannerUrl)       { updates.push('banner_image = ?');    params.push(bannerUrl); }
-      if (req.file)        { updates.push('banner_image = ?');    params.push(`/uploads/ads/${req.file.filename}`); }
+      // Prefer a newly uploaded file; fall back to the URL sent from the form
+      if (req.file) {
+        updates.push('banner_image = ?');
+        params.push(normalizeFilePath(req.file.path));
+      } else if (bannerUrl) {
+        updates.push('banner_image = ?');
+        params.push(bannerUrl);
+      }
       if (linkUrl !== undefined)  { updates.push('link_url = ?');    params.push(linkUrl); }
       if (feeAmount !== undefined){ updates.push('fee_amount = ?');  params.push(feeAmount); }
       if (startDate)       { updates.push('start_date = ?');      params.push(startDate); }

@@ -310,6 +310,7 @@ const deliveryController = {
         `SELECT o.id, o.order_number, o.order_status, o.current_status, o.assigned_branch_id,
                 o.assigned_branch_at, o.branch_accepted_at,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
+                o.district, o.upazila, o.receiver_location, o.receiver_mobile,
                 o.payment_method, o.payment_status, o.delivery_charge,
                 u.username AS customer_name, u.phone AS customer_phone,
                 ab.name AS assigned_branch_name,
@@ -1200,6 +1201,7 @@ const deliveryController = {
                 d.proof_image_url, d.proof_notes, d.destination_address,
                 fb.name as from_branch_name, tb.name as to_branch_name,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
+                o.district, o.upazila, o.receiver_location, o.receiver_mobile,
                 o.payment_method, o.total_amount, o.cod_advance_paid,
                 cu.username as customer_name, cu.phone as customer_phone
          FROM deliveries d
@@ -1342,6 +1344,8 @@ const deliveryController = {
                 d.assigned_at, d.destination_address,
                 fb.name as from_branch_name, tb.name as to_branch_name,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
+                o.district, o.upazila, o.receiver_location, o.receiver_mobile,
+                o.payment_method, o.total_amount, o.cod_advance_paid,
                 cu.username as customer_name, cu.phone as customer_phone
          FROM deliveries d
          JOIN branches fb ON fb.id = d.from_branch_id
@@ -1379,7 +1383,8 @@ const deliveryController = {
                 d.assigned_at, d.delivered_at, d.rejection_reason,
                 d.proof_image_url, d.proof_notes,
                 fb.name as from_branch_name, tb.name as to_branch_name,
-                o.shipping_address, o.shipping_city, o.shipping_country
+                o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
+                o.district, o.upazila, o.receiver_location
          FROM deliveries d
          JOIN branches fb ON fb.id = d.from_branch_id
          JOIN branches tb ON tb.id = d.to_branch_id
@@ -1570,6 +1575,7 @@ const deliveryController = {
                 d.from_branch_id, d.to_branch_id,
                 fb.name as from_branch_name, tb.name as to_branch_name,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
+                o.district, o.upazila, o.receiver_location, o.receiver_mobile,
                 o.order_status, o.user_id as customer_user_id,
                 u.username as customer_name, u.phone as customer_phone,
                 o.current_status
