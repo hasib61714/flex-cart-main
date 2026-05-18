@@ -174,12 +174,11 @@ export const CompanyProvider = ({ children }) => {
             console.error('Add product error:', err);
             return {
                 success: false,
-                message: err.response?.data?.message || 'Network error'
+                message: err.response?.data?.message || 'Network error',
+                debug: err.response?.data?.debug || null
             };
         }
     };
-
-    const updateProduct = async (productId, formData) => {
         if (!isAuthenticated) return { success: false };
         try {
             const res = await api.put(`/companies/products/${productId}`, formData);

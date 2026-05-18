@@ -117,11 +117,16 @@ function OrderInfoCard({ item }) {
           <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '1px 6px' }}>
             <Banknote size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />COD
           </span>
-          {item.payment_status !== 'paid' && item.order_total != null && (
-            <span style={{ fontSize: '0.72rem', color: '#92400e', marginLeft: '4px' }}>
-              ৳{(Number(item.order_total) - Number(item.delivery_charge||0)).toFixed(2)} due on delivery
-            </span>
-          )}
+          {item.payment_status !== 'paid' && (() => {
+            const totalAmt = Number(item.total_amount || item.order_total || 0);
+            const advance = Number(item.cod_advance_paid || 0);
+            const remaining = Math.max(0, totalAmt - advance);
+            return (
+              <span style={{ fontSize: '0.72rem', color: '#92400e', marginLeft: '4px' }}>
+                {advance > 0 ? `৳${advance.toFixed(0)} paid · ` : ''}৳{remaining.toFixed(0)} due
+              </span>
+            );
+          })()}
         </div>
       )}
       <div className="dap-oi-row"><Clock size={12}/><span>{fmtDate(item.assigned_branch_at || item.assigned_at)}</span></div>

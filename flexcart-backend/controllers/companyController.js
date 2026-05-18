@@ -1493,6 +1493,26 @@ const addProduct = async (req, res) => {
               warranty, tags, points_reward, stars_reward, is_in_stock, is_negotiable)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
+        // Ultra-minimal fallback: absolutely no optional columns (original schema only)
+        const ultraMinimalInsertQuery =
+            `INSERT INTO products
+             (company_id, category_id, name, description, old_price, current_price,
+              min_price, max_price, discount_percentage, stock_quantity,
+              image_url, promo_code, brand, model, color, weight, dimensions,
+              warranty, points_reward, stars_reward, is_in_stock)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const ultraMinimalInsertParams = [
+            company_id, category_id, name, description || '',
+            maxPriceVal, currentPrice, minPriceVal,
+            maxPriceVal, discount, parseInt(stock_quantity) || 0,
+            mainImage, promo_code || null,
+            brand || null, model || null, color || null,
+            weight || null, dimensions || null, warranty || null,
+            autoPoints, autoStars,
+            parseInt(stock_quantity) > 0 ? 1 : 0
+        ];
+
         const minimalInsertParams = [
             company_id, category_id, name, description || '',
             maxPriceVal, currentPrice, minPriceVal,
@@ -1548,18 +1568,27 @@ const addProduct = async (req, res) => {
                 result = r2;
             } catch (err2) {
                 if (!isMissingColumnError(err2)) throw err2;
-                // Fallback 2: minimal base schema only (no cod, no ar extra columns)
-                const [r3] = await pool.query(minimalInsertQuery, minimalInsertParams);
-                result = r3;
+                try {
+                    // Fallback 2: minimal base schema only (no cod, no ar extra columns)
+                    const [r3] = await pool.query(minimalInsertQuery, minimalInsertParams);
+                    result = r3;
+                } catch (err3) {
+                    if (!isMissingColumnError(err3)) throw err3;
+                    // Fallback 3: ultra-minimal (no is_negotiable, no tags — absolute base)
+                    const [r4] = await pool.query(ultraMinimalInsertQuery, ultraMinimalInsertParams);
+                    result = r4;
+                }
             }
         }
+
+        const newProductId = result?.insertId || null;
 
         // Insert images into product_images table (may not exist in all deployments)
         for (let i = 0; i < images.length; i++) {
             try {
                 await pool.query(
                     'INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)',
-                    [result.insertId, images[i], i === 0 ? 1 : 0, i]
+                    [newProductId, images[i], i === 0 ? 1 : 0, i]
                 );
             } catch (_e) { /* product_images table may not exist yet */ }
         }
@@ -1572,7 +1601,7 @@ const addProduct = async (req, res) => {
                      (company_id, product_id, code, discount_type, discount_value)
                      VALUES (?, ?, ?, 'percentage', ?)
                      ON CONFLICT (company_id, code) DO UPDATE SET discount_value = EXCLUDED.discount_value`,
-                    [company_id, result.insertId, promo_code,
+                    [company_id, newProductId, promo_code,
                      parseFloat(promo_discount_value)]
                 );
             } catch (_e) { /* company_promo_codes table may not exist yet */ }
@@ -1600,34 +1629,40 @@ const addProduct = async (req, res) => {
                             `INSERT INTO notifications
                              (user_id, type, title, message, reference_id, reference_type)
                              VALUES (?, 'company_update', 'New Product', ?, ?, 'product')`,
-                            [follower.user_id, `${companyName} added: ${name}`, result.insertId]
+                            [follower.user_id, `${companyName} added: ${name}`, newProductId]
                         );
                     } catch (_e) { /* skip notification errors */ }
                 }
             } catch (_e) { /* skip notification errors */ }
         }
 
-        const [newProduct] = await pool.query(
-            'SELECT * FROM products WHERE id = ?',
-            [result.insertId]
-        );
+        let newProduct = [];
+        if (newProductId) {
+            try {
+                [newProduct] = await pool.query(
+                    'SELECT * FROM products WHERE id = ?',
+                    [newProductId]
+                );
+            } catch (_selErr) { /* non-fatal — product was created, just can't return full data */ }
+        }
 
         res.status(201).json({
             success: true,
             message: 'Product created successfully',
-            data: newProduct[0]
+            data: newProduct[0] || null
         });
 
         // Fire-and-forget: index the primary image in the visual search service
         if (mainImage) {
-            indexProductImage(result.insertId, mainImage, name);
+            indexProductImage(newProductId, mainImage, name);
         }
 
     } catch (error) {
-        console.error('Add product error:', error);
+        console.error('Add product error:', error.code, error.message, error.detail || '');
         res.status(500).json({
             success: false,
-            message: 'Failed to create product'
+            message: 'Failed to create product',
+            debug: `${error.code || 'ERR'}: ${error.message}`
         });
     }
 };

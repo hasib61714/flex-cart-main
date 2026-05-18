@@ -312,6 +312,7 @@ const deliveryController = {
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
                 o.district, o.upazila, o.receiver_location, o.receiver_mobile,
                 o.payment_method, o.payment_status, o.delivery_charge,
+                o.total_amount, o.cod_advance_paid,
                 u.username AS customer_name, u.phone AS customer_phone,
                 ab.name AS assigned_branch_name,
                 pb.name AS previous_branch_name,
@@ -1576,7 +1577,9 @@ const deliveryController = {
                 fb.name as from_branch_name, tb.name as to_branch_name,
                 o.shipping_address, o.shipping_city, o.shipping_country, o.shipping_zip,
                 o.district, o.upazila, o.receiver_location, o.receiver_mobile,
-                o.order_status, o.user_id as customer_user_id,
+                o.order_status, o.payment_method, o.payment_status,
+                o.total_amount, o.cod_advance_paid,
+                o.user_id as customer_user_id,
                 u.username as customer_name, u.phone as customer_phone,
                 o.current_status
          FROM deliveries d

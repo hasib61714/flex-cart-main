@@ -233,10 +233,12 @@ const sendMessage = async (req, res) => {
                 if (isNaN(offeredPrice) || offeredPrice <= 0) {
                     return res.status(400).json({ success: false, message: 'Invalid price' });
                 }
-                if (offeredPrice < minPrice) {
+                // Must be >= the customer's eligible (loyalty-discounted) price, not just the absolute minimum
+                const acceptFloor = rule ? eligiblePrice : currentPrice;
+                if (offeredPrice < acceptFloor) {
                     return res.status(400).json({
                         success: false,
-                        message: 'The offered price is below the acceptable minimum. Please try a higher amount.'
+                        message: 'The offered price is below the acceptable range for your account. Please increase your offer.'
                     });
                 }
                 userMessage = `I confirm the deal at ${fmt(offeredPrice)}`;

@@ -203,7 +203,8 @@ const handleImageChange = (e) => {
     if (result.success) {
       onProductAdded();
     } else {
-      setError(result.message || 'Failed to create product. Check file sizes (max 25MB each).');
+      const debugInfo = result.debug ? ` [${result.debug}]` : '';
+      setError((result.message || 'Failed to create product. Check file sizes (max 25MB each).') + debugInfo);
     }
     setSubmitting(false);
   };

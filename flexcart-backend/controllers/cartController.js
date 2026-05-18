@@ -82,8 +82,21 @@ const cartController = {
       }
 
       const negPrice = negotiated_price ? parseFloat(negotiated_price) : null;
-      if (negPrice !== null && (isNaN(negPrice) || negPrice <= 0 || negPrice > parseFloat(products[0].current_price))) {
-        return res.status(400).json({ success: false, message: 'Negotiated price must be a positive number not exceeding the listed price' });
+      if (negPrice !== null) {
+        if (isNaN(negPrice) || negPrice <= 0 || negPrice > parseFloat(products[0].current_price)) {
+          return res.status(400).json({ success: false, message: 'Negotiated price must be a positive number not exceeding the listed price' });
+        }
+        // Verify the negotiated price is backed by an accepted AI negotiation for this user+product
+        const [acceptedNeg] = await pool.query(
+          `SELECT id FROM ai_negotiations
+           WHERE user_id = ? AND product_id = ? AND status = 'accepted'
+             AND final_price IS NOT NULL AND ABS(final_price - ?) < 0.01
+           LIMIT 1`,
+          [req.user.id, product_id, negPrice]
+        );
+        if (acceptedNeg.length === 0) {
+          return res.status(400).json({ success: false, message: 'No accepted negotiation found for this price. Please negotiate the price through the AI negotiator first.' });
+        }
       }
 
       await pool.query(
