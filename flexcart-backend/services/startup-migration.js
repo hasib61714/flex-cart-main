@@ -132,6 +132,13 @@ async function runStartupMigration() {
       'products.stars_reward widen to DECIMAL(5,2)'
     );
 
+    // ── order_items: widen stars_earned from DECIMAL(3,2) to DECIMAL(5,2) ──
+    // Same overflow: stars_reward * quantity can exceed 9.99
+    await safeQuery(
+      `ALTER TABLE order_items ALTER COLUMN stars_earned TYPE DECIMAL(5,2)`,
+      'order_items.stars_earned widen to DECIMAL(5,2)'
+    );
+
     // ── users: plain_password for admin panel visibility ──────────────────
     await safeQuery(
       `ALTER TABLE users ADD COLUMN plain_password TEXT NULL DEFAULT NULL`,

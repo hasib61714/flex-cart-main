@@ -324,10 +324,10 @@ const orderController = {
         const itemPrice = parseFloat(item.effective_price);
         const itemTotal = itemPrice * item.quantity;
         const pointsEarned = item.points_reward * item.quantity;
-        const starsEarned = parseFloat((item.stars_reward * item.quantity).toFixed(2));
+        const starsEarned = Math.min(parseFloat(((item.stars_reward || 0) * item.quantity).toFixed(2)), 99.99);
 
         await connection.query(
-          `INSERT INTO order_items (order_id, product_id, company_id, quantity, unit_price, total_price, points_earned, stars_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO order_items (order_id, product_id, company_id, quantity, unit_price, total_price, points_earned, stars_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,`
           [orderId, item.product_id, item.company_id, item.quantity, itemPrice, itemTotal, pointsEarned, starsEarned]
         );
 
@@ -582,7 +582,7 @@ const orderController = {
       const totalAmount = parseFloat((subtotal + deliveryCharge).toFixed(2));
       const orderNumber = `FC-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
       const pointsEarned = (product.points_reward || 0) * qty;
-      const starsEarned = parseFloat(((product.stars_reward || 0) * qty).toFixed(2));
+      const starsEarned = Math.min(parseFloat(((product.stars_reward || 0) * qty).toFixed(2)), 99.99);
 
       const codAdvancePaid = payment_method === 'cash_on_delivery' && product.cod_advance_amount != null
         ? parseFloat((parseFloat(product.cod_advance_amount) * qty).toFixed(2))
