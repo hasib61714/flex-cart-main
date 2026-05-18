@@ -1474,8 +1474,12 @@ const addProduct = async (req, res) => {
         const mainImage = images.length > 0 ? images[0] : null;
 
         // Auto-generate points & stars based on price
+        // stars_reward column is DECIMAL(5,2) after migration — cap at 99.99 as safety net
         const autoPoints = parseInt(points_reward) || Math.floor(currentPrice * 0.1);
-        const autoStars = parseFloat(stars_reward) || parseFloat((currentPrice * 0.005).toFixed(1));
+        const autoStars = Math.min(
+            parseFloat(stars_reward) || parseFloat((currentPrice * 0.005).toFixed(1)),
+            99.99
+        );
 
         // Helper to detect missing-column errors (MySQL + PostgreSQL)
         const isMissingColumnError = (err) => err && (

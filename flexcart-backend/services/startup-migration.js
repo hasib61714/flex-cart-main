@@ -125,6 +125,13 @@ async function runStartupMigration() {
       'products.cod_advance_amount column'
     );
 
+    // ── products: widen stars_reward from DECIMAL(3,2) to DECIMAL(5,2) ────
+    // DECIMAL(3,2) overflows for products priced ≥ ৳2000 (auto-calc gives 10.0+)
+    await safeQuery(
+      `ALTER TABLE products ALTER COLUMN stars_reward TYPE DECIMAL(5,2)`,
+      'products.stars_reward widen to DECIMAL(5,2)'
+    );
+
     // ── users: plain_password for admin panel visibility ──────────────────
     await safeQuery(
       `ALTER TABLE users ADD COLUMN plain_password TEXT NULL DEFAULT NULL`,
