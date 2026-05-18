@@ -179,6 +179,8 @@ export const CompanyProvider = ({ children }) => {
             };
         }
     };
+
+    const updateProduct = async (productId, formData) => {
         if (!isAuthenticated) return { success: false };
         try {
             const res = await api.put(`/companies/products/${productId}`, formData);
